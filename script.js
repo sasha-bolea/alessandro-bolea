@@ -35,6 +35,17 @@ let revealAnimationFinished = false; // Flag che indica se l'animazione della se
 let hasTyped = false; // Flag per assicurarsi che l'animazione "reveal" parta una sola volta
 let currentEditableElement = null; // Riferimento all'elemento attualmente "modificabile" dall'utente (simula un input di testo)
 let additionalRevealTyped = false; // Flag per tracciare se il testo aggiuntivo è stato aggiunto
+let lastRevealLineCount = 1; // Conteggio righe sezione "reveal", usato per numeri di riga tools
+
+// --- Sezione "I Miei Strumenti" ---
+// Variabile inizializzata che rappresenta gli strumenti usati.
+const iMieiStrumenti = {
+    linguaggi: ["JavaScript", "TypeScript", "HTML", "CSS"],
+    runtime: ["Node.js", "Express"],
+    frontend: ["React", "Vue"],
+    database: ["SQL", "MongoDB"],
+    tools: ["Git", "GitHub", "VSCode"],
+};
 
 /**
  * ============================================================================
@@ -52,23 +63,12 @@ let additionalRevealTyped = false; // Flag per tracciare se il testo aggiuntivo 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Calcola un ritardo (delay) per l'animazione di scrittura basato sulla posizione
- * dello scroll. Più si scrolla verso il basso, più veloce è l'animazione.
- * @returns {number} Un valore di ritardo in millisecondi.
+ * Ritorna un delay casuale tra MIN_DELAY e MAX_DELAY (ms).
  */
+const MIN_DELAY = 5;
+const MAX_DELAY = 25;
 function getScrollBasedDelay() {
-    const scrollableHeight = document.body.scrollHeight - window.innerHeight;
-    const scrollPercent =
-        scrollableHeight > 0 ? (window.scrollY / scrollableHeight) * 100 : 0;
-
-    // MODIFICA QUI: Range di velocità per la digitazione (Reveal) basata sullo scroll
-    // maxDelay (lento in alto) / minDelay (veloce in basso)
-    const maxDelay = 20,
-        minDelay = 2;
-
-    const delay = maxDelay - (scrollPercent / 100) * (maxDelay - minDelay);
-    // Aggiunge una piccola variazione casuale per un effetto più naturale
-    return Math.floor(Math.random() * (delay * 0.6)) + delay * 0.4;
+    return Math.random() * (MAX_DELAY - MIN_DELAY) + MIN_DELAY;
 }
 
 /**
@@ -78,6 +78,14 @@ function getScrollBasedDelay() {
 function syncLineNumbersWidth() {
     const nameWidth = nameLineNumbers.offsetWidth;
     if (revealLineNumbers) revealLineNumbers.style.width = nameWidth + "px";
+    const toolsNums = [
+        document.getElementById("tools-title-line-numbers"),
+        document.getElementById("tools-body-line-numbers"),
+        document.getElementById("tools-close-line-numbers"),
+    ];
+    toolsNums.forEach((el) => {
+        if (el) el.style.width = nameWidth + "px";
+    });
 }
 
 /**
@@ -241,7 +249,9 @@ function updateVisualLineNumbers() {
         numbersText += i + (i < startLineNumber + actualLines - 1 ? "\n" : "");
     }
     revealLineNumbers.textContent = numbersText;
-    updateIndentLine(); // Aggiorna la linea di indentazione
+    lastRevealLineCount = actualLines;
+    updateIndentLine();
+    updateToolsLineNumbers();
 }
 
 /**
@@ -318,6 +328,8 @@ async function typeRevealText() {
     // Il testo da scrivere
     const revealText =
         "/*\nSono uno sviluppatore web full stack di 10011 anni. Progetto e sviluppo applicazioni web curando frontend e backend, con attenzione a performance, usabilità e mantenibilità. Affronto i problemi in modo analitico, con particolare attenzione al debug e all'ottimizzazione.\n*/";
+
+    revealContent.classList.add("typing-cursor");
 
     // Mostra la linea di indentazione e la graffa, ma con altezza 0
     indentLine.style.display = "block";
@@ -436,34 +448,66 @@ async function typeRevealText() {
         await sleep(getScrollBasedDelay());
     }
 
-    revealAnimationFinished = true; // L'intera animazione "reveal" è finita
+    revealAnimationFinished = true;
 
-    // Gestisce l'attivazione/disattivazione del cursore
     const nameEl = document.getElementById("full-name");
     if (currentEditableElement === nameEl) deactivateCursor(nameEl);
-    activateCursor(revealContent);
+
+    revealContent.textContent += "\n ";
+    updateVisualLineNumbers();
+    revealContent.classList.remove("typing-cursor");
+
+    typeToolsSection();
 }
 
 /**
- * Anima la scrittura di testo aggiuntivo nella sezione "reveal".
+ * Anima la scrittura della sezione "I Miei Strumenti" carattere per carattere,
+ * dopo che il testo aggiuntivo del reveal è stato completato.
  */
-async function typeAdditionalRevealText() {
-    const additionalText =
-        "\n\n/*\nInoltre, ho esperienza con database SQL e NoSQL, e sono sempre desideroso di imparare nuove tecnologie per migliorare le mie competenze.\n*/";
+async function typeToolsSection() {
+    const titleEl = document.querySelector(".tools-title-text");
+    const bodyEl = document.getElementById("tools-body");
+    const closeEl = document.querySelector(".tools-closing-text");
+    if (!titleEl || !bodyEl || !closeEl) return;
 
-    // Disattiva il cursore e l'input utente mentre si scrive
-    deactivateCursor(revealContent);
-    revealAnimationFinished = false;
+    titleEl.textContent = "";
+    bodyEl.textContent = "";
+    closeEl.textContent = "";
 
-    for (let i = 0; i < additionalText.length; i++) {
-        revealContent.textContent += additionalText[i];
-        updateVisualLineNumbers();
-        await sleep(getScrollBasedDelay()); // Riutilizza la stessa funzione per il delay
+    titleEl.classList.add("typing-cursor");
+    const titleText = "const iMieiStrumenti = {";
+    for (let i = 1; i <= titleText.length; i++) {
+        titleEl.textContent = titleText.substring(0, i);
+        updateToolsLineNumbers();
+        await sleep(getScrollBasedDelay());
     }
+    titleEl.classList.remove("typing-cursor");
 
-    revealAnimationFinished = true; // Riabilita l'input alla fine
-    // Riattiva il cursore alla fine
-    activateCursor(revealContent);
+    const bodyText = Object.entries(iMieiStrumenti)
+        .map(([key, val]) => {
+            const formatted = Array.isArray(val)
+                ? `[${val.map((v) => `"${v}"`).join(", ")}]`
+                : JSON.stringify(val);
+            return `    ${key}: ${formatted},`;
+        })
+        .join("\n");
+
+    bodyEl.classList.add("typing-cursor");
+    for (let i = 1; i <= bodyText.length; i++) {
+        bodyEl.textContent = bodyText.substring(0, i);
+        updateToolsLineNumbers();
+        await sleep(getScrollBasedDelay());
+    }
+    bodyEl.classList.remove("typing-cursor");
+
+    closeEl.classList.add("typing-cursor");
+    const closeText = "};";
+    for (let i = 1; i <= closeText.length; i++) {
+        closeEl.textContent = closeText.substring(0, i);
+        updateToolsLineNumbers();
+        await sleep(getScrollBasedDelay());
+    }
+    closeEl.classList.remove("typing-cursor");
 }
 
 /**
@@ -500,9 +544,8 @@ document.addEventListener("keydown", function (e) {
         currentEditableElement === document.getElementById("full-name");
     const isReveal = currentEditableElement === revealContent;
 
-    // Non permettere la modifica durante le animazioni
+    if (isReveal) return;
     if (isName && !animationFinished) return;
-    if (isReveal && !revealAnimationFinished) return;
 
     // Blocca il "seleziona tutto" (Ctrl+A)
     if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
@@ -610,20 +653,6 @@ window.addEventListener("scroll", () => {
         typeRevealText();
     }
 
-    // --- LOGICA PER AGGIUNGERE TESTO EXTRA ---
-    // Se l'animazione di reveal è finita, non abbiamo ancora aggiunto il testo extra,
-    // e l'utente ha scrollato oltre un certo punto (es. 50% della pagina),
-    // allora avvia l'animazione per il testo aggiuntivo.
-    const scrollableHeight = document.body.scrollHeight - window.innerHeight;
-    if (
-        revealAnimationFinished &&
-        !additionalRevealTyped &&
-        scrollableHeight > 0 &&
-        window.scrollY > scrollableHeight * 0.5 // Trigger al 50% dello scroll
-    ) {
-        additionalRevealTyped = true; // Imposta il flag per non ripeterlo
-        typeAdditionalRevealText(); // Avvia la nuova animazione
-    }
 });
 
 // Listener per l'evento di resize della finestra, per mantenere il layout corretto
@@ -631,13 +660,75 @@ window.addEventListener("resize", () => {
     updateNameLineNumbers();
     syncLineNumbersWidth();
     updateRevealSectionPosition();
+    updateToolsLineNumbers();
 });
+
+/**
+ * Renderizza il contenuto della sezione "I Miei Strumenti" leggendo
+ * Inizializza la sezione tools vuota al caricamento (verrà animata dopo il reveal).
+ */
+function initToolsSection() {
+    updateToolsLineNumbers();
+}
+
+/**
+ * Calcola i numeri di riga della sezione "tools", in continuità visuale con
+ * la sezione "reveal".
+ */
+function updateToolsLineNumbers() {
+    const titleNums = document.getElementById("tools-title-line-numbers");
+    const bodyNums = document.getElementById("tools-body-line-numbers");
+    const closeNums = document.getElementById("tools-close-line-numbers");
+    const body = document.getElementById("tools-body");
+    const titleEl = document.querySelector(".tools-title-text");
+    const closeEl = document.querySelector(".tools-closing-text");
+    if (
+        !titleNums ||
+        !bodyNums ||
+        !closeNums ||
+        !body ||
+        !titleEl ||
+        !closeEl
+    ) {
+        return;
+    }
+
+    let currentLine = lastNameLineCount + lastRevealLineCount + 1;
+
+    if (titleEl.textContent.length > 0) {
+        titleNums.textContent = String(currentLine);
+        currentLine++;
+    } else {
+        titleNums.textContent = "";
+    }
+
+    const bodyText = body.textContent;
+    if (bodyText.length > 0) {
+        const bodyLines = bodyText.split("\n").length;
+        let bodyStr = "";
+        for (let i = 0; i < bodyLines; i++) {
+            bodyStr +=
+                currentLine + i + (i < bodyLines - 1 ? "\n" : "");
+        }
+        bodyNums.textContent = bodyStr;
+        currentLine += bodyLines;
+    } else {
+        bodyNums.textContent = "";
+    }
+
+    if (closeEl.textContent.length > 0) {
+        closeNums.textContent = String(currentLine);
+    } else {
+        closeNums.textContent = "";
+    }
+}
 
 // Listener per l'evento "load": si attiva quando la pagina è completamente caricata
 window.addEventListener("load", () => {
     // Imposta le posizioni iniziali corrette
     updateRevealSectionPosition();
     syncLineNumbersWidth();
+    initToolsSection();
 
     // Avvia l'animazione principale del nome
     animateName().then(() => {
