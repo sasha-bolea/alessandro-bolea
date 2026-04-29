@@ -1,64 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work in Progress - Alessandro Bolea</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="construction.css">
-</head>
-<body>
-    <div class="background-text break-word">
-        <strong><span>STATUS_403_FORBIDDEN<br>DEVELOPMENT_MODE<br>BUILDING_FUTURE</span></strong>
-    </div>
-
-    <main class="construction-container">
-        <h1 class="construction-title">
-            <span class="line-numbers">1</span>
-            <span class="keyword">class</span> <span class="class-name">ProgettoInCorso</span> {
-        </h1>
-
-        <div class="code-body">
-            <div class="code-line">
-                <span class="line-numbers">2</span>
-                <span class="indent"></span><span class="keyword">constructor</span>() {
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">3</span>
-                <span class="indent-2"></span><span class="property">this.status</span> = <span class="string">"UNDER_CONSTRUCTION"</span>;
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">4</span>
-                <span class="indent-2"></span><span class="property">this.progress</span> = <span class="number">75</span>; <span class="comment">// %</span>
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">5</span>
-                <span class="indent"></span>}
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">6</span>
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">7</span>
-                <span class="indent"></span><span class="method">render</span>() {
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">8</span>
-                <span class="indent-2"></span><span class="keyword">return</span> <span class="string">"Torna presto per vedere le novità!"</span>;
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">9</span>
-                <span class="indent"></span>}
-            </div>
-            <div class="code-line">
-                <span class="line-numbers">10</span>
-                }
-            </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Alessandro Bolea</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="background-text break-word">
+            <strong><span id="background-text"></span></strong>
         </div>
-    </main>
+        <h1 class="break-word">
+            <span class="line-numbers" id="name-line-numbers">1</span
+            ><span id="full-name"
+                ><span id="surname"></span><span id="name"></span
+            ></span>
+        </h1>
+        <div class="indent-line">
+            <strong><span id="indent-line"></span></strong>
+        </div>
+        <span id="closing-brace">}</span>
+        <section class="reveal-section">
+            <div class="reveal-text">
+                <span class="line-numbers" id="reveal-line-numbers"></span>
+                <span id="reveal-content"></span>
+            </div>
+        </section>
 
-    <div class="footer-status">
-        <span class="typing-cursor">Inizializzazione componenti...</span>
-    </div>
-</body>
+        <section class="tools-section">
+            <div class="tools-row tools-title-row">
+                <span class="line-numbers" id="tools-title-line-numbers"></span>
+                <span class="tools-title-text"></span>
+            </div>
+            <div class="tools-row tools-body-row">
+                <span class="line-numbers" id="tools-body-line-numbers"></span>
+                <div class="tools-body" id="tools-body"></div>
+            </div>
+            <div class="tools-row tools-close-row">
+                <span class="line-numbers" id="tools-close-line-numbers"></span>
+                <span class="tools-closing-text"></span>
+            </div>
+        </section>
+
+        <script src="script.js"></script>
+    </body>
 </html>
+
+ciao
