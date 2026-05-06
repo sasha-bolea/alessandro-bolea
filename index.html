@@ -1,49 +1,95 @@
 <!doctype html>
-<html lang="it">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Alessandro Bolea</title>
-        <link rel="stylesheet" href="style.css" />
-    </head>
-    <body>
-        <div class="background-text break-word">
-            <strong><span id="background-text"></span></strong>
-        </div>
-        <h1 class="break-word">
-            <span class="line-numbers" id="name-line-numbers">1</span
-            ><span id="full-name"
-                ><span id="surname"></span><span id="name"></span
-            ></span>
-        </h1>
-        <div class="indent-line">
-            <strong><span id="indent-line"></span></strong>
-        </div>
-        <span id="closing-brace">}</span>
-        <section class="reveal-section">
-            <div class="reveal-text">
-                <span class="line-numbers" id="reveal-line-numbers"></span>
-                <span id="reveal-content"></span>
-            </div>
-        </section>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alessandro Bolea</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css" />
+  <link rel="stylesheet" href="style.css?v=5" />
+</head>
+<body>
 
-        <section class="tools-section">
-            <div class="tools-row tools-title-row">
-                <span class="line-numbers" id="tools-title-line-numbers"></span>
-                <span class="tools-title-text"></span>
-            </div>
-            <div class="tools-row tools-body-row">
-                <span class="line-numbers" id="tools-body-line-numbers"></span>
-                <div class="tools-body" id="tools-body"></div>
-            </div>
-            <div class="tools-row tools-close-row">
-                <span class="line-numbers" id="tools-close-line-numbers"></span>
-                <span class="tools-closing-text"></span>
-            </div>
-        </section>
+  <div id="custom-cursor"></div>
 
-        <script src="script.js"></script>
-    </body>
+  <div id="theme-toggle"><span id="theme-label">//Devs: Beware</span><span id="theme-dot"></span></div>
+
+
+  <h1 class="break-word">
+    <span class="line-numbers" id="name-line-numbers">1</span>
+    <span id="full-name"><span id="surname"></span><span id="name"></span></span>
+  </h1>
+
+  <div id="indent-line"></div>
+  <span class="line-numbers" id="brace-line-numbers"></span>
+  <span id="closing-brace">}</span>
+
+  <section class="reveal-section">
+    <div class="reveal-text">
+      <span class="line-numbers" id="reveal-line-numbers"></span>
+      <span id="reveal-content"></span>
+    </div>
+  </section>
+
+  <section class="code-section" id="tools-section" style="padding-bottom: 0;">
+    <div class="code-row">
+      <span class="line-numbers" id="tools-title-ln"></span>
+      <span id="tools-title-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="tools-body-ln"></span>
+      <div class="code-block" id="tools-body"></div>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="tools-close-ln"></span>
+      <span id="tools-close-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="tools-empty-ln"></span>
+    </div>
+  </section>
+
+  <section class="code-section" id="projects-section" style="padding-bottom: 0;">
+    <div class="code-row">
+      <span class="line-numbers" id="proj-title-ln"></span>
+      <span id="proj-title-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="proj-body-ln"></span>
+      <div class="code-block" id="projects-list"></div>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="proj-close-ln"></span>
+      <span id="proj-close-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="proj-empty-ln"></span>
+    </div>
+  </section>
+
+  <section class="code-section" id="contact-section" style="padding-bottom: 0;">
+    <div class="code-row">
+      <span class="line-numbers" id="contact-title-ln"></span>
+      <span id="contact-title-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="contact-body-ln"></span>
+      <div class="code-block" id="contact-body"></div>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="contact-close-ln"></span>
+      <span id="contact-close-text"></span>
+    </div>
+    <div class="code-row">
+      <span class="line-numbers" id="contact-empty-ln"></span>
+    </div>
+  </section>
+
+  <div id="easter-egg">
+    <span id="ee-close" onclick="closeEasterEgg()">×</span>
+    <div id="ee-content"></div>
+  </div>
+
+  <script src="gol.js" defer></script>
+  <script src="script.js?v=12" defer></script>
+</body>
 </html>
-
-ciao
