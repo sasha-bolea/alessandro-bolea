@@ -144,8 +144,10 @@ h1 {
   z-index: 1;
   display: none;
   height: 0;
-  transition: border-color 0.4s;
-  transition: background-color 0.4s;
+  transition: border-color 0.4s, background-color 0.4s;
+}
+body.cards-animatable #indent-line {
+  transition: border-color 0.4s, background-color 0.4s, height 320ms ease;
 }
 #closing-brace {
   position: absolute;
@@ -156,6 +158,7 @@ h1 {
   user-select: none;
   transition: color 0.4s;
 }
+body.cards-animatable #closing-brace { transition: color 0.4s, top 320ms ease; }
 #brace-line-numbers {
   position: absolute;
   font-size: 7.5vw;
@@ -164,6 +167,7 @@ h1 {
   display: none;
   color: var(--text-dim);
 }
+body.cards-animatable #brace-line-numbers { transition: top 320ms ease; }
 
 /* ── Sezioni (shared) ── */
 .code-section {

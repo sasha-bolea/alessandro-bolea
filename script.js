@@ -738,6 +738,7 @@ async function renderProjItems() {
   window._afterProjLine = cur + 2;
   window._projLayoutDone = true;
   setupProjResizeObserver();
+  requestAnimationFrame(() => document.body.classList.add("cards-animatable"));
   updateContactLn();
 }
 
@@ -1031,9 +1032,10 @@ function recomputeProjLines() {
       bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lines);
       lines++;
     } else {
-      const arr = bln.textContent.split("\n").slice(0, desired);
+      const arr = bln.textContent.split("\n");
+      arr.pop();
       bln.textContent = arr.join("\n");
-      lines = desired;
+      lines--;
     }
     const cln = document.getElementById("proj-close-ln");
     const eEmpty = document.getElementById("proj-empty-ln");
