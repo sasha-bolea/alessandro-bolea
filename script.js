@@ -1011,14 +1011,19 @@ let _layoutPumpEnd = 0;
 let _layoutPumpRunning = false;
 function pumpLayoutDuring(durationMs) {
   _layoutPumpEnd = Math.max(_layoutPumpEnd, performance.now() + durationMs);
+  const listEl = document.getElementById("projects-list");
+  if (listEl) listEl.classList.add("no-block-transition");
   if (_layoutPumpRunning) return;
   _layoutPumpRunning = true;
   const tick = () => {
+    const list = document.getElementById("projects-list");
+    if (list) list.style.setProperty("--block-h", list.offsetHeight + "px");
     if (window.indentDone) repositionBrace();
     if (performance.now() < _layoutPumpEnd) {
       requestAnimationFrame(tick);
     } else {
       _layoutPumpRunning = false;
+      if (list) list.classList.remove("no-block-transition");
     }
   };
   requestAnimationFrame(tick);
