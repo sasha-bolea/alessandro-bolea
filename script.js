@@ -772,7 +772,16 @@ async function typeContactSection() {
     const a = document.createElement("a");
     a.className = "contact-link";
     a.href = href;
-    if (k !== "email") a.target = "_blank";
+    if (k !== "email") {
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    } else {
+      a.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = href;
+      });
+    }
     a.innerHTML = `<span class="contact-indent">    </span><span class="contact-key"></span><span class="contact-sep">:    </span><span class="contact-val contact-cursor"></span>`;
     bodyEl.appendChild(a);
     bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
