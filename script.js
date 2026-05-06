@@ -1002,6 +1002,26 @@ function setCardExpanded(card, open) {
       exp.style.maxHeight = "0px";
     });
   }
+  pumpLayoutDuring(400);
+}
+
+/* rAF loop che ricalcola brace + indent-line per durationMs ms.
+   Usato durante apertura/chiusura card per tenere indent line allineata in tempo reale. */
+let _layoutPumpEnd = 0;
+let _layoutPumpRunning = false;
+function pumpLayoutDuring(durationMs) {
+  _layoutPumpEnd = Math.max(_layoutPumpEnd, performance.now() + durationMs);
+  if (_layoutPumpRunning) return;
+  _layoutPumpRunning = true;
+  const tick = () => {
+    if (window.indentDone) repositionBrace();
+    if (performance.now() < _layoutPumpEnd) {
+      requestAnimationFrame(tick);
+    } else {
+      _layoutPumpRunning = false;
+    }
+  };
+  requestAnimationFrame(tick);
 }
 
 /* Recompute proj-body line numbers smoothly when listEl resizes (card expand/collapse).
