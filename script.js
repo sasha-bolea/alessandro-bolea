@@ -767,21 +767,19 @@ async function typeContactSection() {
     const [k, raw] = entries[ei];
     const isObj = typeof raw === "object" && raw !== null;
     const display = isObj ? raw.display : raw;
-    const href = isObj ? raw.href : (k === "email" ? `mailto:${raw}` : `https://${raw}`);
+    // Email punta a Gmail web compose: funziona ovunque (no client mail richiesto)
+    // e tasto destro "apri in nuova scheda" carica davvero la pagina invece di about:blank.
+    const href = isObj
+      ? raw.href
+      : (k === "email"
+          ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(raw)}`
+          : `https://${raw}`);
     const valStr = `"${display}"${ei < entries.length - 1 ? "," : ""}`;
     const a = document.createElement("a");
     a.className = "contact-link";
     a.href = href;
-    if (k !== "email") {
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-    } else {
-      a.addEventListener("click", e => {
-        e.preventDefault();
-        e.stopPropagation();
-        window.location.href = href;
-      });
-    }
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
     a.innerHTML = `<span class="contact-indent">    </span><span class="contact-key"></span><span class="contact-sep">:    </span><span class="contact-val contact-cursor"></span>`;
     bodyEl.appendChild(a);
     bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
