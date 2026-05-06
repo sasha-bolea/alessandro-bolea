@@ -16,6 +16,7 @@ const iMieiProgetti = [
   {
     nome:   "Game of Life",
     desc:   "Sfondo interattivo del sito",
+    dettagli: "Cellular automaton di Conway in JS vanilla. Canvas 2D con topologia toroidale (effetto Pac-Man). Iniezione periodica di gliders dai bordi per mantenere viva la simulazione. Click sullo sfondo aggiunge una cellula. Controlli rapidi nella card: pause/play, clear, reseed.",
     tech:   ["JS"],
     status: "LIVE",
     link:   "#",
@@ -680,14 +681,37 @@ async function renderProjItems() {
         </button>
       </div>` : ``;
     const middleHtml = p.isGol ? golHtml : `<p class="proj-desc">${p.desc}</p>`;
+    const expandedHtml = p.dettagli ? `
+      <div class="proj-card-expanded">
+        <div class="proj-card-expanded-inner">
+          <p class="proj-card-expanded-text">${p.dettagli}</p>
+        </div>
+      </div>` : ``;
     card.innerHTML = `
-      <div class="proj-card-body">
-        <p class="proj-name">${p.nome}</p>
-        ${middleHtml}
+      <div class="proj-card-row">
+        <div class="proj-card-body">
+          <p class="proj-name">${p.nome}</p>
+          ${middleHtml}
+        </div>
+        <div class="proj-card-footer">${techTags}${linkHtml}</div>
       </div>
-      <div class="proj-card-footer">${techTags}${linkHtml}</div>`;
-    if (p.link && p.link !== "#" && !p.isGol) card.addEventListener("click", () => window.open(p.link, "_blank"));
+      ${expandedHtml}`;
     if (p.isGol) bindGolControls(card);
+    if (p.dettagli) {
+      card.classList.add("is-expandable");
+      card.addEventListener("click", e => {
+        if (e.target.closest(".gol-controls, .proj-open-link, button, a")) return;
+        const wasOpen = card.classList.contains("is-expanded");
+        wrap.querySelectorAll(".project-card.is-expanded").forEach(c => {
+          if (c !== card) setCardExpanded(c, false);
+        });
+        setCardExpanded(card, !wasOpen);
+      });
+    } else if (p.link && p.link !== "#" && !p.isGol) {
+      card.addEventListener("click", () => window.open(p.link, "_blank"));
+    }
+    const linkEl = card.querySelector(".proj-open-link");
+    if (linkEl) linkEl.addEventListener("click", e => e.stopPropagation());
 
     group.appendChild(card);
     wrap.appendChild(group);
@@ -713,6 +737,7 @@ async function renderProjItems() {
   if (projEmptyLn) projEmptyLn.textContent = String(cur + 1);
   window._afterProjLine = cur + 2;
   window._projLayoutDone = true;
+  setupProjResizeObserver();
   updateContactLn();
 }
 
@@ -947,6 +972,79 @@ document.addEventListener("mouseenter", () => cursor.style.display = "block");
 /* ============================================================
    GOL CONTROLS
    ============================================================ */
+/* Smoothly expand/collapse a project card via max-height (animate both directions).
+   On open: set explicit px height of inner, then unset to 'none' after transition (so dynamic content fits).
+   On close: re-pin current px height, then on next frame set to 0 to trigger collapse transition. */
+function setCardExpanded(card, open) {
+  const exp = card.querySelector(".proj-card-expanded");
+  if (!exp) return;
+  const inner = exp.querySelector(".proj-card-expanded-inner");
+  if (!inner) return;
+  exp.removeEventListener("transitionend", exp._golEndHandler || (()=>{}));
+  if (open) {
+    card.classList.add("is-expanded");
+    const target = inner.scrollHeight;
+    exp.style.maxHeight = target + "px";
+    const onEnd = e => {
+      if (e.propertyName !== "max-height") return;
+      exp.style.maxHeight = "none";
+      exp.removeEventListener("transitionend", onEnd);
+    };
+    exp._golEndHandler = onEnd;
+    exp.addEventListener("transitionend", onEnd);
+  } else {
+    const cur = exp.scrollHeight;
+    exp.style.maxHeight = cur + "px";
+    void exp.offsetHeight;
+    requestAnimationFrame(() => {
+      card.classList.remove("is-expanded");
+      exp.style.maxHeight = "0px";
+    });
+  }
+}
+
+/* Recompute proj-body line numbers smoothly when listEl resizes (card expand/collapse).
+   Append/remove one line every ~25ms. Fixed numbers stay; new ones append at end. */
+let _projRO = null;
+let _projAppendTimer = null;
+function setupProjResizeObserver() {
+  const listEl = document.getElementById("projects-list");
+  if (!listEl || _projRO) return;
+  _projRO = new ResizeObserver(() => recomputeProjLines());
+  _projRO.observe(listEl);
+}
+function recomputeProjLines() {
+  if (window._projRendering || !window._projLayoutDone) return;
+  const listEl = document.getElementById("projects-list");
+  const bln = document.getElementById("proj-body-ln");
+  if (!listEl || !bln) return;
+  const lh = getLineH(listEl) || 28;
+  const startNum = (window._afterToolsLine || (lastNameLines + lastRevealLines + 10)) + 1;
+  if (_projAppendTimer) { clearInterval(_projAppendTimer); _projAppendTimer = null; }
+  _projAppendTimer = setInterval(() => {
+    let lines = bln.textContent ? bln.textContent.split("\n").length : 0;
+    const desired = Math.max(1, Math.round(listEl.offsetHeight / lh));
+    if (lines === desired) {
+      clearInterval(_projAppendTimer);
+      _projAppendTimer = null;
+    } else if (lines < desired) {
+      bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lines);
+      lines++;
+    } else {
+      const arr = bln.textContent.split("\n").slice(0, desired);
+      bln.textContent = arr.join("\n");
+      lines = desired;
+    }
+    const cln = document.getElementById("proj-close-ln");
+    const eEmpty = document.getElementById("proj-empty-ln");
+    if (cln) cln.textContent = String(startNum + lines);
+    if (eEmpty) eEmpty.textContent = String(startNum + lines + 1);
+    window._afterProjLine = startNum + lines + 2;
+    updateContactLn();
+    if (window.indentDone) repositionBrace();
+  }, 25);
+}
+
 function bindGolControls(root) {
   const toggleBtn = root.querySelector('[data-gol-action="toggle"]');
   const clearBtn  = root.querySelector('[data-gol-action="clear"]');
