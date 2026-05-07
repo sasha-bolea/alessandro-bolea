@@ -744,7 +744,7 @@ async function renderProjItems() {
     if (p.dettagli) {
       card.classList.add("is-expandable");
       card.addEventListener("click", e => {
-        if (e.target.closest(".gol-controls, .proj-open-link, button, a")) return;
+        if (e.target.closest(".proj-open-link, button, a")) return;
         const wasOpen = card.classList.contains("is-expanded");
         wrap.querySelectorAll(".project-card.is-expanded").forEach(c => {
           if (c !== card) setCardExpanded(c, false);

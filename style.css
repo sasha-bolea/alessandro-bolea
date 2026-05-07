@@ -780,3 +780,21 @@ body.gol-focus-mode > #easter-egg {
   opacity: 0;
   pointer-events: none;
 }
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  /* Controlli GoL nascosti finché card chiusa */
+  .gol-controls {
+    display: none;
+  }
+
+  /* Card aperta: controlli sotto il nome */
+  .project-card.is-expanded .proj-card-body {
+    flex-wrap: wrap;
+  }
+  .project-card.is-expanded .gol-controls {
+    display: inline-flex;
+    flex-basis: 100%;
+    margin-top: 0.4em;
+  }
+}
