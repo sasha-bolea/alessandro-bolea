@@ -348,17 +348,45 @@ h1 {
   opacity: 0;
   overflow: hidden;
   margin: 0;
+  white-space: normal;
   transition: max-height 320ms ease, opacity 240ms ease, margin 320ms ease, padding 320ms ease;
 }
 .proj-card-expanded-inner { min-height: 0; }
 .project-card.is-expanded .proj-card-expanded {
   opacity: 1;
-  margin-top: 0.4em;
-  padding-bottom: 0.6em;
+  margin-top: 0;
+  padding-bottom: 0;
+}
+.gol-speed-wrap {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 320ms ease, opacity 240ms ease;
+}
+.project-card.is-expanded .gol-speed-wrap {
+  max-height: 220px;
+  opacity: 1;
+}
+.gol-pen-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+.gol-pen-btn.is-active {
+  color: var(--text);
+  border-color: var(--text);
+  background: rgba(255,255,255,0.06);
+}
+[data-theme="light"] .gol-pen-btn.is-active {
+  background: rgba(0,0,0,0.06);
+  border-color: var(--text);
+  color: var(--text);
 }
 .proj-card-expanded-text {
   margin: 0;
-  padding: 0.5em 0 0;
+  padding: 0.2em 0 0;
   border-top: 1px dashed var(--line-bar);
   color: var(--text-dim);
   font-size: 0.95em;
@@ -595,3 +623,83 @@ h1 {
 .gol-ico-play { display: none; }
 .gol-btn.is-paused .gol-ico-pause { display: none; }
 .gol-btn.is-paused .gol-ico-play  { display: block; }
+
+/* Tooltip hover sui bottoni GoL */
+.gol-btn[data-tooltip] { position: relative; }
+.gol-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: "Hack", monospace;
+  font-size: 0.65em;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line-bar);
+  border-radius: 4px;
+  padding: 2px 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.gol-btn[data-tooltip]:hover::after { opacity: 1; }
+
+/* Speed slider GoL */
+.gol-speed-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gol-speed-label {
+  font-family: "Hack", monospace;
+  font-size: 0.68em;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+.gol-speed-edge {
+  font-family: "Hack", monospace;
+  font-size: 0.6em;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.gol-speed-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: var(--line-bar);
+  border-radius: 2px;
+  outline: none;
+  cursor: none;
+}
+.gol-speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  border: 1px solid var(--line-bar);
+  transition: background 0.15s, transform 0.12s;
+}
+.gol-speed-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  border: 1px solid var(--line-bar);
+  transition: background 0.15s, transform 0.12s;
+}
+.gol-speed-slider:hover::-webkit-slider-thumb {
+  background: var(--text);
+  transform: scale(1.2);
+}
+.gol-speed-slider:hover::-moz-range-thumb {
+  background: var(--text);
+  transform: scale(1.2);
+}

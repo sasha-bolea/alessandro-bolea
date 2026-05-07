@@ -669,18 +669,51 @@ async function renderProjItems() {
       : ``;
     const golHtml = p.isGol ? `
       <div class="gol-controls" data-tweaks-ignore>
-        <button type="button" class="gol-btn" data-gol-action="toggle" aria-label="Pausa/Play">
+        <button type="button" class="gol-btn" data-gol-action="toggle" aria-label="Pausa/Play" data-tooltip="Pausa / Play">
           <svg class="gol-ico gol-ico-pause" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="12"/><line x1="10" y1="4" x2="10" y2="12"/></svg>
           <svg class="gol-ico gol-ico-play" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4 L12 8 L5.5 12 Z"/></svg>
         </button>
-        <button type="button" class="gol-btn" data-gol-action="clear" aria-label="Pulisci">
+        <button type="button" class="gol-btn" data-gol-action="clear" aria-label="Pulisci" data-tooltip="Pulisci griglia">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5"/></svg>
         </button>
-        <button type="button" class="gol-btn" data-gol-action="reseed" aria-label="Re-seed">
+        <button type="button" class="gol-btn" data-gol-action="reseed" aria-label="Re-seed" data-tooltip="Nuova generazione">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8 A4.5 4.5 0 1 1 8 3.5 L11 3.5"/><polyline points="9.6,2 11,3.5 9.6,5"/></svg>
         </button>
       </div>` : ``;
     const middleHtml = p.isGol ? golHtml : `<p class="proj-desc">${p.desc}</p>`;
+    const speedSliderHtml = p.isGol ? `
+      <div class="gol-speed-wrap" data-tweaks-ignore>
+        <div class="gol-speed-row">
+          <span class="gol-speed-label">velocità</span>
+          <span class="gol-speed-edge">lento</span>
+          <input type="range" class="gol-speed-slider" data-gol-action="speed"
+                 min="100" max="2000" step="50" value="1820">
+          <span class="gol-speed-edge">veloce</span>
+        </div>
+        <div class="gol-pen-row">
+          <button type="button" class="gol-btn gol-pen-btn is-active" data-gol-pen="cell" data-tooltip="Singola cella">
+            <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="5.5" y="5.5" width="5" height="5" fill="currentColor"/>
+            </svg>
+          </button>
+          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="draw" data-tooltip="Disegna trascinando">
+            <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11.2 2.6 L13.4 4.8 L5.6 12.6 L2.6 13.4 L3.4 10.4 Z"/>
+              <path d="M9.8 4 L12 6.2"/>
+              <path d="M2.6 13.4 L4.6 11.4"/>
+            </svg>
+          </button>
+          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="glider" data-tooltip="Glider">
+            <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="6" y="2" width="3" height="3" fill="currentColor"/>
+              <rect x="10" y="6" width="3" height="3" fill="currentColor"/>
+              <rect x="2" y="10" width="3" height="3" fill="currentColor"/>
+              <rect x="6" y="10" width="3" height="3" fill="currentColor"/>
+              <rect x="10" y="10" width="3" height="3" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>` : ``;
     const expandedHtml = p.dettagli ? `
       <div class="proj-card-expanded">
         <div class="proj-card-expanded-inner">
@@ -695,6 +728,7 @@ async function renderProjItems() {
         </div>
         <div class="proj-card-footer">${techTags}${linkHtml}</div>
       </div>
+      ${speedSliderHtml}
       ${expandedHtml}`;
     if (p.isGol) bindGolControls(card);
     if (p.dettagli) {
@@ -1096,6 +1130,30 @@ function bindGolControls(root) {
   });
   clearBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.clear(); });
   reseedBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.reseed(); });
+
+  const speedSlider = root.querySelector('[data-gol-action="speed"]');
+  if (speedSlider) {
+    if (window.__gol) speedSlider.value = 2100 - window.__gol.get().speedMs;
+    speedSlider.addEventListener("input", e => {
+      e.stopPropagation();
+      window.__gol && window.__gol.set({ speedMs: 2100 - Number(speedSlider.value) });
+    });
+    speedSlider.addEventListener("click", e => e.stopPropagation());
+  }
+
+  const penBtns = root.querySelectorAll('[data-gol-pen]');
+  if (penBtns.length) {
+    const currentPen = window.__gol ? window.__gol.get().pen : "cell";
+    penBtns.forEach(btn => {
+      btn.classList.toggle("is-active", btn.dataset.golPen === currentPen);
+      btn.addEventListener("click", e => {
+        stop(e);
+        const mode = btn.dataset.golPen;
+        window.__gol && window.__gol.set({ pen: mode });
+        penBtns.forEach(b => b.classList.toggle("is-active", b === btn));
+      });
+    });
+  }
 }
 
 /* ============================================================

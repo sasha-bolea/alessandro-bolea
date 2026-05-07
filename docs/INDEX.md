@@ -1,6 +1,6 @@
 # alessandro-bolea — Wiki progetto
 
-Aggiornato: 2026-05-06 19:57
+Aggiornato: 2026-05-07 16:35
 
 Sito personale di Alessandro Bolea. Estetica "code editor": numeri di riga,
 indentazione visibile, parentesi graffe, tipo monospace. Tema dark/light togglabile.
@@ -33,8 +33,28 @@ Ogni progetto ha campo opzionale `dettagli`. Se presente:
 - Cellular automaton di Conway, topologia toroidale (effetto Pac-Man)
 - Canvas `position: absolute`, alto quanto tutto il documento → scrolla col sito
 - Iniezione periodica di gliders dai bordi per mantenere viva la simulazione
-- Click sullo sfondo → 1 cella nella posizione cliccata
+- `speedMs` default `280` (più veloce di prima `1000` — più reattivo come sfondo)
 - Card progetto "Game of Life" ha controlli pause/play, clear, reseed (SVG inline)
+  con tooltip hover (`data-tooltip` + CSS `::after`)
+
+### Tweaks card (visibili solo quando card aperta)
+- Container dedicato `.gol-speed-wrap` (separato da `.proj-card-expanded`),
+  animato via `max-height` CSS-only su `.is-expanded`. Necessario tenerlo separato
+  perché il pannello descrizione anima via JS (`scrollHeight`) e mescolare i due
+  causava spazi indesiderati e gap di centratura.
+- Slider velocità (`<input type="range">`) con mapping invertito: slider value =
+  `2100 - speedMs` → sinistra=lento, destra=veloce (più intuitivo).
+- 3 modalità "penna" (`tweaks.pen`): `cell` (default, click singolo aggiunge 1
+  cella), `draw` (drag dipinge multipla), `glider` (click stampa glider con
+  orientamento random). Bottone attivo evidenziato con `.is-active`.
+- `gol.js`: vecchio `handleClick` sostituito da pointer events
+  (`pointerdown`/`move`/`up`) per supportare drag mode.
+
+### Fix sottile: white-space ereditato
+La sezione progetti vive dentro `.code-row` che ha `white-space: pre-wrap`.
+Il template literal di `.proj-card-expanded` con indentazione + newline veniva
+renderizzato come spazi visibili sopra/sotto il `<p>` testo. Override
+`white-space: normal` su `.proj-card-expanded` collassa il whitespace HTML.
 
 ## Pagine wiki
 - [architettura.md](architettura.md) — _(crea se serve)_

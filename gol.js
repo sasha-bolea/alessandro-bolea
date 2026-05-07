@@ -7,12 +7,13 @@
   // ── Tweak defaults (persistenti via host postMessage) ──
   const DEFAULTS = /*EDITMODE-BEGIN*/{
     "cellSize": 18,
-    "speedMs": 1000,
+    "speedMs": 280,
     "opacityPct": 100,
     "style": "square",
     "seed": "random",
     "stagnationInjection": true,
     "clickToAdd": true,
+    "pen": "cell",
     "trailFade": 0.92,
     "paused": false
   }/*EDITMODE-END*/;
@@ -351,23 +352,57 @@
     rafId = requestAnimationFrame(loop);
   }
 
-  // ── Click to add cells ──
-  function handleClick(e) {
-    if (!tweaks.clickToAdd) return;
-    const t = e.target;
-    if (t && t.closest && t.closest(
-      "#theme-toggle, a, button, .project-card, #easter-egg, #tweaks-panel, [data-tweaks-ignore]"
-    )) return;
+  // ── Pointer-based input: cell / draw / glider ──
+  let isDrawing = false;
 
+  // Restituisce true se il target è un elemento UI da ignorare
+  function isIgnoredTarget(t) {
+    return !!(t && t.closest && t.closest(
+      "#theme-toggle, a, button, .project-card, #easter-egg, #tweaks-panel, [data-tweaks-ignore]"
+    ));
+  }
+
+  // Converte coordinate evento in coordinate cella
+  function cellFromEvent(e) {
     const cs = Math.max(4, tweaks.cellSize);
     const x = Math.floor((e.clientX + window.scrollX) / cs);
     const y = Math.floor((e.clientY + window.scrollY) / cs);
+    return [x, y];
+  }
 
+  // Setta una cella viva con bounds check
+  function paintCell(x, y) {
     if (x >= 0 && x < cols && y >= 0 && y < rows) {
       grid[y * cols + x] = 1;
     }
+  }
+
+  function handlePointerDown(e) {
+    if (!tweaks.clickToAdd) return;
+    if (isIgnoredTarget(e.target)) return;
+    const [x, y] = cellFromEvent(e);
+    if (tweaks.pen === "draw") {
+      isDrawing = true;
+      paintCell(x, y);
+    } else if (tweaks.pen === "glider") {
+      if (cols >= 8 && rows >= 8) {
+        const ori = Math.floor(Math.random() * 4);
+        injectGlider(grid, cols, rows, x, y, ori);
+      }
+    } else {
+      paintCell(x, y);
+    }
     draw(false);
   }
+
+  function handlePointerMove(e) {
+    if (!isDrawing) return;
+    const [x, y] = cellFromEvent(e);
+    paintCell(x, y);
+    draw(false);
+  }
+
+  function handlePointerUp() { isDrawing = false; }
 
   // ── Public API per Tweaks ──
   window.__gol = {
@@ -398,8 +433,11 @@
   };
 
   // ── Init ──
-  // Listener click su tutto il documento (canvas è pointer-events:none)
-  document.addEventListener("click", handleClick, { passive: true });
+  // Listener pointer su tutto il documento (canvas è pointer-events:none)
+  document.addEventListener("pointerdown", handlePointerDown, { passive: true });
+  document.addEventListener("pointermove", handlePointerMove, { passive: true });
+  document.addEventListener("pointerup",   handlePointerUp,   { passive: true });
+  document.addEventListener("pointercancel", handlePointerUp, { passive: true });
 
   // Resize debounced
   let resizeTimer = 0;
