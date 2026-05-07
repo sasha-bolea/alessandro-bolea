@@ -265,11 +265,52 @@
     return h >>> 0;
   }
 
+  // ── Override colore cella + fade ──
+  // _cellOverride: hex string fissato (es. "#ffffff") o null per usare CSS var
+  // _cellFade*: stato animazione interpolata da from a to su durata
+  let _cellOverride = null;
+  let _cellFadeFrom = null;
+  let _cellFadeTo = null;
+  let _cellFadeStart = 0;
+  let _cellFadeDur = 600;
+
+  // Parsing hex "#rgb" o "#rrggbb" → [r,g,b]
+  function parseHex(h) {
+    if (!h) return [30, 30, 30];
+    h = h.trim().replace(/^#/, "");
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    const n = parseInt(h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  // Lerp tra due colori hex su t∈[0,1]
+  function lerpHex(a, b, t) {
+    const [ar, ag, ab] = parseHex(a);
+    const [br, bg, bb] = parseHex(b);
+    const r = Math.round(ar + (br - ar) * t);
+    const g = Math.round(ag + (bg - ag) * t);
+    const bl = Math.round(ab + (bb - ab) * t);
+    return "#" + ((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1);
+  }
+
   // ── Render ──
-  function getCellColor() {
-    // Legge il colore corrente di --bg-glyph dal tema
+  function getThemeCellColor() {
     const v = getComputedStyle(document.documentElement).getPropertyValue("--bg-glyph").trim();
     return v || "#1e1e1e";
+  }
+  function getCellColor() {
+    if (_cellFadeStart) {
+      const t = Math.min(1, (performance.now() - _cellFadeStart) / _cellFadeDur);
+      if (t >= 1) {
+        _cellOverride = _cellFadeTo;
+        _cellFadeStart = 0;
+        return _cellOverride === null ? getThemeCellColor() : _cellOverride;
+      }
+      // Durante fade, "to=null" significa target = colore tema corrente
+      const target = _cellFadeTo === null ? getThemeCellColor() : _cellFadeTo;
+      return lerpHex(_cellFadeFrom, target, t);
+    }
+    if (_cellOverride !== null) return _cellOverride;
+    return getThemeCellColor();
   }
   function getBgColor() {
     const v = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
@@ -429,6 +470,15 @@
       draw(true);
     },
     inject: () => injectRandomPattern(),
+    // Cambia colore celle con fade.
+    // target: hex string (es. "#ffffff") oppure null per tornare al colore tema (CSS var --bg-glyph).
+    // durMs: durata fade ms (default 600).
+    setCellColor: (target, durMs) => {
+      _cellFadeFrom = getCellColor();
+      _cellFadeTo = (target === undefined) ? null : target;
+      _cellFadeStart = performance.now();
+      _cellFadeDur = Math.max(1, durMs == null ? 600 : durMs);
+    },
     DEFAULTS,
   };
 

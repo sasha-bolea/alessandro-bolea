@@ -624,6 +624,11 @@ h1 {
 .gol-btn.is-paused .gol-ico-pause { display: none; }
 .gol-btn.is-paused .gol-ico-play  { display: block; }
 
+/* Toggle icone focus on/off — quando focus mode attivo (is-active) mostra contrai */
+.gol-ico-focus-off { display: none; }
+.gol-focus-btn.is-active .gol-ico-focus-on { display: none; }
+.gol-focus-btn.is-active .gol-ico-focus-off { display: block; }
+
 /* Tooltip hover sui bottoni GoL */
 .gol-btn[data-tooltip] { position: relative; }
 .gol-btn[data-tooltip]::after {
@@ -702,4 +707,76 @@ h1 {
 .gol-speed-slider:hover::-moz-range-thumb {
   background: var(--text);
   transform: scale(1.2);
+}
+
+/* ============================================================
+   GOL FOCUS MODE — card morpha in controller fixed-bottom
+   ============================================================ */
+/* Bottone focus separato visivamente dai mode-selector (bordo dashed) */
+.gol-focus-btn { margin-left: 0.4em; border-style: dashed; }
+
+/* Card stessa diventa il controller (FLIP-animated da JS) */
+.project-card.gol-focus-active {
+  position: fixed;
+  bottom: 1.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(280px, 36vw, 480px);
+  z-index: 50;
+  background: var(--bg);
+  border: 1px solid var(--line-bar);
+  border-radius: 10px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.4);
+  padding: 0.7em 1em;
+  margin: 0;
+  flex-direction: column;
+  gap: 0.55em;
+  cursor: none;
+}
+[data-theme="light"] .project-card.gol-focus-active {
+  box-shadow: 0 6px 28px rgba(0,0,0,0.18);
+}
+
+/* Hide elementi card non necessari in focus */
+.gol-focus-active .proj-card-comment,
+.gol-focus-active .proj-name,
+.gol-focus-active .proj-card-footer,
+.gol-focus-active .proj-card-expanded { display: none; }
+
+/* Forza visibilità di slider+pen anche se card non era is-expanded */
+.gol-focus-active .gol-speed-wrap {
+  max-height: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+.gol-focus-active .proj-card-row { min-height: 0; gap: 0; }
+.gol-focus-active .proj-card-body { justify-content: center; }
+.gol-focus-active .gol-controls { justify-content: center; flex: 0; }
+.gol-focus-active .gol-speed-row { justify-content: center; }
+.gol-focus-active .gol-pen-row { justify-content: center; }
+
+/* ============================================================
+   FADE SEZIONI durante focus mode
+   Tutti i blocchi top-level di body fadano via opacity. La card
+   reparentata in body NON match questi selettori (esclusione
+   esplicita su .project-card) e quindi non viene nascosta.
+   ============================================================ */
+body > h1,
+body > #indent-line,
+body > #brace-line-numbers,
+body > #closing-brace,
+body > .reveal-section,
+body > .code-section,
+body > #easter-egg {
+  transition: opacity 600ms ease;
+}
+body.gol-focus-mode > h1,
+body.gol-focus-mode > #indent-line,
+body.gol-focus-mode > #brace-line-numbers,
+body.gol-focus-mode > #closing-brace,
+body.gol-focus-mode > .reveal-section,
+body.gol-focus-mode > .code-section,
+body.gol-focus-mode > #easter-egg {
+  opacity: 0;
+  pointer-events: none;
 }

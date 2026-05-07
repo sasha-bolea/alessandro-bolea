@@ -1,6 +1,6 @@
 # alessandro-bolea — Wiki progetto
 
-Aggiornato: 2026-05-07 16:35
+Aggiornato: 2026-05-07 17:02
 
 Sito personale di Alessandro Bolea. Estetica "code editor": numeri di riga,
 indentazione visibile, parentesi graffe, tipo monospace. Tema dark/light togglabile.
@@ -55,6 +55,48 @@ La sezione progetti vive dentro `.code-row` che ha `white-space: pre-wrap`.
 Il template literal di `.proj-card-expanded` con indentazione + newline veniva
 renderizzato come spazi visibili sopra/sotto il `<p>` testo. Override
 `white-space: normal` su `.proj-card-expanded` collassa il whitespace HTML.
+
+### Focus mode (controller fullscreen GoL)
+4° bottone in `.gol-pen-row` (icona frecce 4 angoli) trasforma la card stessa
+in un controller dedicato. **Non è una pagina nuova: è la stessa pagina che
+si trasforma.**
+
+Pipeline visiva (durate concorrenti):
+- **Card morph (700ms)** — la card stessa si sposta/ridimensiona da posizione
+  in-flow (dentro la sezione progetti) a `position: fixed` bottom-center
+  ~480px, via FLIP (First-Last-Invert-Play). Niente clone, stesso elemento DOM.
+- **Sezioni fade-out (600ms)** — `body > h1, .code-section, .reveal-section,
+  #indent-line, #brace-line-numbers, #closing-brace, #easter-egg` con
+  `transition: opacity 600ms ease`; classe `body.gol-focus-mode` setta
+  `opacity: 0; pointer-events: none`. Theme-toggle e cursore custom esclusi.
+- **Cell fade a bianco (920ms)** — `__gol.setCellColor("#ffffff", FOCUS_DUR + 220)`
+  via lerp interno in `gol.js` (parsing hex + interpolazione canale-per-canale
+  in `getCellColor()`).
+
+**Reparenting**: durante `enterFocus` la card viene `appendChild`-ata in body.
+Necessario perché altrimenti l'opacity della sezione genitrice (in fade) si
+propagherebbe alla card via inheritance — la card sarebbe invisibile come
+le sezioni. Da body, niente parente che fada. `_golCardOriginalParent` +
+`_golCardOriginalNextSibling` salvati per ripristino in `exitFocus`.
+
+**FLIP details** (`_flipFromTo`):
+1. `first = card.getBoundingClientRect()` PRIMA del cambio layout
+2. Cambia layout (aggiunge classe + sposta card)
+3. `last = card.getBoundingClientRect()` DOPO
+4. Calcola `dx, dy, sx, sy` come delta
+5. `transform: translate(dx,dy) scale(sx,sy)` + `transition: none` + force reflow
+6. RAF: `transition: transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1)` +
+   `transform: ""` → animazione smooth verso identità
+
+**Hide elementi card in focus**: `.gol-focus-active .proj-name,
+.proj-card-footer, .proj-card-expanded, .proj-card-comment` con `display: none`.
+Forza `.gol-speed-wrap` visibile (`max-height: none !important`) per non
+dipendere da `.is-expanded` (utile se card era collassata, anche se in pratica
+deve essere espansa per accedere al focus btn).
+
+**Indent line sync**: `pumpLayoutDuring(FOCUS_DUR + 100)` chiamato in entrambi
+`enterFocus`/`exitFocus` perché la rimozione/restituzione della card cambia
+`#projects-list.offsetHeight` → `--block-h` deve aggiornarsi via rAF tick.
 
 ## Pagine wiki
 - [architettura.md](architettura.md) — _(crea se serve)_

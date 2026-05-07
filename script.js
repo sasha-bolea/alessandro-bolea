@@ -712,6 +712,16 @@ async function renderProjItems() {
               <rect x="10" y="10" width="3" height="3" fill="currentColor"/>
             </svg>
           </button>
+          <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; controller">
+            <svg class="gol-ico gol-ico-focus-on" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2,6 2,2 6,2"/><polyline points="14,6 14,2 10,2"/>
+              <polyline points="2,10 2,14 6,14"/><polyline points="14,10 14,14 10,14"/>
+            </svg>
+            <svg class="gol-ico gol-ico-focus-off" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6,2 6,6 2,6"/><polyline points="10,2 10,6 14,6"/>
+              <polyline points="6,14 6,10 2,10"/><polyline points="10,14 10,10 14,10"/>
+            </svg>
+          </button>
         </div>
       </div>` : ``;
     const expandedHtml = p.dettagli ? `
@@ -992,12 +1002,22 @@ function closeEasterEgg() {
 /* ============================================================
    THEME TOGGLE
    ============================================================ */
+// Colore cella in focus mode: bianco su tema dark, nero su tema light
+function _focusCellColor() {
+  return document.documentElement.getAttribute("data-theme") === "light"
+    ? "#000000" : "#ffffff";
+}
+
 document.getElementById("theme-toggle").addEventListener("click", () => {
   const html  = document.documentElement;
   const label = document.getElementById("theme-label");
   const isDark = html.getAttribute("data-theme") === "dark";
   html.setAttribute("data-theme", isDark ? "light" : "dark");
   label.textContent = isDark ? "//Back to the Cave" : "//Devs: Beware";
+  // Se focus mode attivo, fada celle al nuovo colore di contrasto
+  if (document.body.classList.contains("gol-focus-mode") && window.__gol) {
+    window.__gol.setCellColor(_focusCellColor(), 300);
+  }
 });
 
 /* ============================================================
@@ -1113,6 +1133,25 @@ function recomputeProjLines() {
   }, 25);
 }
 
+// Sync helpers — aggiornano TUTTI i bottoni/slider gemelli (card + focus bar)
+function _syncPaused(paused) {
+  document.querySelectorAll('[data-gol-action="toggle"]').forEach(b =>
+    b.classList.toggle("is-paused", paused));
+}
+function _syncPen(mode) {
+  document.querySelectorAll('[data-gol-pen]').forEach(b =>
+    b.classList.toggle("is-active", b.dataset.golPen === mode));
+}
+function _syncSpeed(speedMs) {
+  document.querySelectorAll('[data-gol-action="speed"]').forEach(s => {
+    s.value = 2100 - speedMs;
+  });
+}
+function _syncFocus(isFocus) {
+  document.querySelectorAll('[data-gol-action="focus"]').forEach(b =>
+    b.classList.toggle("is-active", isFocus));
+}
+
 function bindGolControls(root) {
   const toggleBtn = root.querySelector('[data-gol-action="toggle"]');
   const clearBtn  = root.querySelector('[data-gol-action="clear"]');
@@ -1126,7 +1165,7 @@ function bindGolControls(root) {
     if (!window.__gol) return;
     const paused = !window.__gol.get().paused;
     window.__gol.set({ paused });
-    toggleBtn.classList.toggle("is-paused", paused);
+    _syncPaused(paused);
   });
   clearBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.clear(); });
   reseedBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.reseed(); });
@@ -1136,7 +1175,9 @@ function bindGolControls(root) {
     if (window.__gol) speedSlider.value = 2100 - window.__gol.get().speedMs;
     speedSlider.addEventListener("input", e => {
       e.stopPropagation();
-      window.__gol && window.__gol.set({ speedMs: 2100 - Number(speedSlider.value) });
+      const speedMs = 2100 - Number(speedSlider.value);
+      window.__gol && window.__gol.set({ speedMs });
+      _syncSpeed(speedMs);
     });
     speedSlider.addEventListener("click", e => e.stopPropagation());
   }
@@ -1150,10 +1191,91 @@ function bindGolControls(root) {
         stop(e);
         const mode = btn.dataset.golPen;
         window.__gol && window.__gol.set({ pen: mode });
-        penBtns.forEach(b => b.classList.toggle("is-active", b === btn));
+        _syncPen(mode);
       });
     });
   }
+
+  // Toggle focus mode (FLIP morph + fade sezioni)
+  const focusBtn = root.querySelector('[data-gol-action="focus"]');
+  if (focusBtn) {
+    focusBtn.addEventListener("click", e => {
+      stop(e);
+      const card = root.closest(".project-card") || root;
+      const isFocus = !document.body.classList.contains("gol-focus-mode");
+      if (isFocus) enterFocus(card);
+      else exitFocus(card);
+      _syncFocus(isFocus);
+      window.__gol && window.__gol.setCellColor(isFocus ? _focusCellColor() : null, FOCUS_DUR + 220);
+    });
+  }
+}
+
+/* ============================================================
+   GOL FOCUS MODE — FLIP morph
+   La card stessa si sposta/ridimensiona da posizione in-flow a fixed
+   bottom-center via FLIP. Reparenting in <body> per disaccoppiare dal
+   fade opacity delle sezioni.
+   ============================================================ */
+const FOCUS_DUR = 700;
+let _golCardOriginalParent = null;
+let _golCardOriginalNextSibling = null;
+
+// Applica FLIP transform da rect "first" a layout corrente
+function _flipFromTo(card, first) {
+  const last = card.getBoundingClientRect();
+  const dx = first.left - last.left;
+  const dy = first.top - last.top;
+  const sx = first.width / Math.max(1, last.width);
+  const sy = first.height / Math.max(1, last.height);
+  card.style.transformOrigin = "top left";
+  card.style.transition = "none";
+  card.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+  // Force reflow per applicare transform "iniziale" prima della transizione
+  void card.offsetWidth;
+  requestAnimationFrame(() => {
+    card.style.transition = `transform ${FOCUS_DUR}ms cubic-bezier(0.22, 0.61, 0.36, 1)`;
+    card.style.transform = "";
+  });
+  setTimeout(() => {
+    card.style.transition = "";
+    card.style.transform = "";
+    card.style.transformOrigin = "";
+  }, FOCUS_DUR + 60);
+}
+
+function enterFocus(card) {
+  const first = card.getBoundingClientRect();
+  // Salva posizione originale per ripristino
+  _golCardOriginalParent = card.parentNode;
+  _golCardOriginalNextSibling = card.nextSibling;
+  // Pin altezza del parent così che il document non si rimpicciolisca
+  // quando reparentiamo la card (altrimenti scroll si blocca a metà)
+  if (_golCardOriginalParent) {
+    _golCardOriginalParent.style.minHeight = _golCardOriginalParent.offsetHeight + "px";
+  }
+  document.body.appendChild(card);
+  card.classList.add("gol-focus-active");
+  document.body.classList.add("gol-focus-mode");
+  _flipFromTo(card, first);
+  if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
+}
+
+function exitFocus(card) {
+  const first = card.getBoundingClientRect();
+  card.classList.remove("gol-focus-active");
+  document.body.classList.remove("gol-focus-mode");
+  // Reparent dove era prima + libera min-height pinnata
+  if (_golCardOriginalParent) {
+    _golCardOriginalParent.style.minHeight = "";
+    if (_golCardOriginalNextSibling && _golCardOriginalNextSibling.parentNode === _golCardOriginalParent) {
+      _golCardOriginalParent.insertBefore(card, _golCardOriginalNextSibling);
+    } else {
+      _golCardOriginalParent.appendChild(card);
+    }
+  }
+  _flipFromTo(card, first);
+  if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
 }
 
 /* ============================================================
