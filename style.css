@@ -493,7 +493,7 @@ h1 {
 .contact-link:hover .contact-key { color: var(--text); }
 .contact-link:hover .contact-val { color: var(--text); }
 .contact-indent { color: transparent; user-select: none; }
-.contact-sep { color: var(--text); }
+.contact-sep { color: var(--text); padding-right: 1em; }
 .contact-cursor::after {
   content: "";
   display: inline-block;
@@ -882,6 +882,9 @@ body.gol-focus-mode > #easter-egg {
   #reveal-content {
     padding-right: 0.5rem;
   }
+
+  /* Nessuno spazio tra chiave e valore nei contatti */
+  .contact-sep { padding-right: 0; }
 
   /* Riduci distanze indentazione su mobile */
   .code-row .line-numbers,

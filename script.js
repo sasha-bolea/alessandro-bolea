@@ -126,6 +126,28 @@ function lnRange(start, count) {
   return s;
 }
 
+// Imposta --block-h sul body così che la barra arrivi esattamente
+// fino alla riga di chiusura della sezione (sopra la "}")
+// Mappa bodyId → closeId
+const BLOCK_CLOSE_MAP = {
+  "tools-body":    "tools-close-text",
+  "projects-list": "proj-close-text",
+  "contact-body":  "contact-close-text",
+};
+function setBlockH(bodyEl) {
+  if (!bodyEl) return;
+  const closeId = BLOCK_CLOSE_MAP[bodyEl.id];
+  const closeEl = closeId ? document.getElementById(closeId) : null;
+  if (!closeEl) {
+    setBlockH(bodyEl);
+    return;
+  }
+  const bRect = bodyEl.getBoundingClientRect();
+  const cRect = closeEl.getBoundingClientRect();
+  const h = Math.max(0, cRect.top - bRect.top);
+  bodyEl.style.setProperty("--block-h", h + "px");
+}
+
 // Misura altezza di una singola riga renderizzata dentro refEl
 function getLineH(refEl) {
   const tmp = document.createElement("span");
@@ -158,10 +180,18 @@ function lineRows(span) {
       return Math.max(1, Math.round(source.offsetHeight / slh));
     }
     case "dynamic-block": {
-      if (source.offsetHeight === 0) return 0;
+      if (source.offsetHeight === 0) {
+        source.style.minHeight = "";
+        return 0;
+      }
       const slh = singleLineHeight(source) || getLineH(source);
       if (!slh) return 0;
-      return Math.max(1, Math.round(source.offsetHeight / slh));
+      // Snap altezza body a multiplo esatto di lineHeight per evitare
+      // gap visivo fra numeri di riga e contenuto (card più alte del testo).
+      source.style.minHeight = "";
+      const rows = Math.max(1, Math.round(source.offsetHeight / slh));
+      source.style.minHeight = (rows * slh) + "px";
+      return rows;
     }
     case "conditional":
     case "empty-after":
@@ -477,14 +507,14 @@ async function renderToolsItems() {
       lbl.textContent = item;
       card.appendChild(lbl);
       row.appendChild(card);
-      bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
+      setBlockH(bodyEl);
       updateIndentLineH(card);
       await fast(sec.tools, 50);
     }
-    bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
+    setBlockH(bodyEl);
     await fast(sec.tools, 80);
   }
-  bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
+  setBlockH(bodyEl);
   renderingDone = true;
   await sleep(50);
   // Catch-up smooth fino al numero finale di righe
@@ -704,11 +734,11 @@ async function renderProjItems() {
 
     group.appendChild(card);
     wrap.appendChild(group);
-    listEl.style.setProperty("--block-h", listEl.offsetHeight + "px");
+    setBlockH(listEl);
     updateIndentLineH(card);
     await fast(sec.projects, 180);
   }
-  listEl.style.setProperty("--block-h", listEl.offsetHeight + "px");
+  setBlockH(listEl);
   renderingDone = true;
   await sleep(50);
   // Catch-up smooth fino al numero finale di righe
@@ -750,7 +780,11 @@ async function typeContactSection() {
   for (let ei = 0; ei < entries.length; ei++) {
     const [k, raw] = entries[ei];
     const isObj = typeof raw === "object" && raw !== null;
-    const display = isObj ? raw.display : raw;
+    const fullDisplay = isObj ? raw.display : raw;
+    const isMobile = window.innerWidth <= 600;
+    const display = (isMobile && k !== "email")
+      ? fullDisplay.slice(fullDisplay.lastIndexOf("/") + 1)
+      : fullDisplay;
     // Email punta a Gmail web compose: funziona ovunque (no client mail richiesto)
     // e tasto destro "apri in nuova scheda" carica davvero la pagina invece di about:blank.
     const href = isObj
@@ -764,9 +798,9 @@ async function typeContactSection() {
     a.href = href;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.innerHTML = `<span class="contact-indent">    </span><span class="contact-key"></span><span class="contact-sep">:    </span><span class="contact-val contact-cursor"></span>`;
+    a.innerHTML = `<span class="contact-indent">    </span><span class="contact-key"></span><span class="contact-sep">:</span><span class="contact-val contact-cursor"></span>`;
     bodyEl.appendChild(a);
-    bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
+    setBlockH(bodyEl);
     updateIndentLineH(a);
     updateContactLn();
 
@@ -1008,7 +1042,7 @@ function pumpLayoutDuring(durationMs) {
   _layoutPumpRunning = true;
   const tick = () => {
     const list = document.getElementById("projects-list");
-    if (list) list.style.setProperty("--block-h", list.offsetHeight + "px");
+    if (list) setBlockH(list);
     if (window.indentDone) repositionBrace();
     if (performance.now() < _layoutPumpEnd) {
       requestAnimationFrame(tick);
