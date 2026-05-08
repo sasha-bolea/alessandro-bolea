@@ -1257,6 +1257,7 @@ function enterFocus(card) {
   document.body.appendChild(card);
   card.classList.add("gol-focus-active");
   document.body.classList.add("gol-focus-mode");
+  document.body.style.overflow = "hidden";
   _flipFromTo(card, first);
   if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
 }
@@ -1265,6 +1266,7 @@ function exitFocus(card) {
   const first = card.getBoundingClientRect();
   card.classList.remove("gol-focus-active");
   document.body.classList.remove("gol-focus-mode");
+  document.body.style.overflow = "";
   // Reparent dove era prima + libera min-height pinnata
   if (_golCardOriginalParent) {
     _golCardOriginalParent.style.minHeight = "";
