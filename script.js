@@ -590,7 +590,7 @@ async function renderProjItems() {
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8 A4.5 4.5 0 1 1 8 3.5 L11 3.5"/><polyline points="9.6,2 11,3.5 9.6,5"/></svg>
         </button>
       </div>` : ``;
-    const middleHtml = p.isGol ? golHtml : `<p class="proj-desc">${p.desc}</p>`;
+    const middleHtml = p.isGol ? `` : `<p class="proj-desc">${p.desc}</p>`;
     const speedSliderHtml = p.isGol ? `
       <div class="gol-speed-wrap" data-tweaks-ignore>
         <div class="gol-speed-row">
@@ -636,6 +636,11 @@ async function renderProjItems() {
               <button type="button" class="gol-pattern-option" data-gol-pattern="pentadecathlon">pentadecathlon</button>
               <button type="button" class="gol-pattern-option" data-gol-pattern="acorn">acorn</button>
               <button type="button" class="gol-pattern-option" data-gol-pattern="diehard">diehard</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="lwss">lwss</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="beacon">beacon</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="pi-heptomino">pi-heptomino</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="switch-engine">switch engine</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="copperhead">copperhead</button>
             </div>
           </div>
           <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; controller">
@@ -665,13 +670,25 @@ async function renderProjItems() {
         </div>
         <div class="proj-card-footer">${techTags}${linkHtml}</div>
       </div>
+      ${golHtml}
       ${speedSliderHtml}
       ${expandedHtml}
       ${golInfoCardHtml}`;
-    if (p.isGol) bindGolControls(card);
+    if (p.isGol) {
+      bindGolControls(card);
+      // Ripristina focus mode se era attiva prima del reload
+      if (sessionStorage.getItem("golFocusMode")) {
+        requestAnimationFrame(() => {
+          enterFocus(card, true);
+          _syncFocus(true);
+          window.__gol && window.__gol.setCellColor(_focusCellColor(), 0);
+        });
+      }
+    }
     if (p.dettagli) {
       card.classList.add("is-expandable");
       card.addEventListener("click", e => {
+        if (card.classList.contains("gol-focus-active")) return;
         if (e.target.closest(".proj-open-link, button, a")) return;
         const wasOpen = card.classList.contains("is-expanded");
         wrap.querySelectorAll(".project-card.is-expanded").forEach(c => {
@@ -1102,6 +1119,11 @@ function bindGolControls(root) {
     "pentadecathlon": { title: "Pentadecathlon", desc: "Oscillatore di periodo 15 — tra i più alti per una struttura così semplice. Prende il nome dal ciclo olimpico." },
     "acorn":          { title: "Acorn", desc: "Methuselah da 7 celle. Cresce in modo caotico per 5206 generazioni prima di stabilizzarsi in 633 celle." },
     "diehard":        { title: "Diehard", desc: "Methuselah da 7 celle. Sopravvive per 130 generazioni, poi scompare completamente senza lasciare traccia." },
+    "lwss":           { title: "Lightweight Spaceship", desc: "Il più piccolo degli spaceship standard. Si muove orizzontalmente di 2 celle ogni 4 generazioni (velocità c/2). Scoperto da John Conway nel 1970." },
+    "beacon":         { title: "Beacon", desc: "Oscillatore di periodo 2 formato da due blocchi 2×2 sovrapposti a un angolo. Uno dei più semplici e comuni oscillatori del GoL." },
+    "pi-heptomino":   { title: "Pi-Heptomino", desc: "Methuselah da 7 celle a forma di π. Evolve in modo caotico per 173 generazioni prima di stabilizzarsi in una configurazione con glider." },
+    "switch-engine":  { title: "Switch Engine", desc: "Struttura da 8 celle scoperta da Charles Corderman nel 1971. Cresce in modo infinito lasciando una scia di detriti, muovendosi in diagonale a velocità c/12." },
+    "copperhead":     { title: "Copperhead", desc: "Spaceship di periodo 10 scoperto nel 2016. Si muove verticalmente a velocità c/10. Notevole per la sua forma compatta e simmetrica." },
   };
   const patternTrigger = root.querySelector('[data-gol-action="pattern-toggle"]');
   const patternDropdown = root.querySelector('.gol-pattern-dropdown');
@@ -1119,7 +1141,7 @@ function bindGolControls(root) {
   }
   function _hideInfo() {
     if (!infoCard) return;
-    infoCard.classList.remove("is-visible");
+    infoCard.classList.remove("is-visible", "is-locked");
     _infoLocked = false;
   }
 
@@ -1147,6 +1169,7 @@ function bindGolControls(root) {
         }
         _populateInfo(name);
         _infoLocked = true;
+        infoCard && infoCard.classList.add("is-locked");
         patternDropdown.classList.remove("is-open");
       });
     });
@@ -1215,7 +1238,7 @@ function _flipFromTo(card, first) {
   }, FOCUS_DUR + 60);
 }
 
-function enterFocus(card) {
+function enterFocus(card, instant) {
   const first = card.getBoundingClientRect();
   // Salva posizione originale per ripristino
   _golCardOriginalParent = card.parentNode;
@@ -1229,18 +1252,20 @@ function enterFocus(card) {
   card.classList.add("gol-focus-active");
   document.body.classList.add("gol-focus-mode");
   document.documentElement.style.overflow = "hidden";
-  _flipFromTo(card, first);
-  // Slide-in theme toggle dall'alto (keyframe from parte da -110% anche se base è visibile)
-  const themeToggle = document.getElementById("theme-toggle");
-  if (themeToggle) {
-    themeToggle.classList.remove("gol-focus-entering");
-    void themeToggle.offsetWidth; // forza reflow per restart animazione
-    themeToggle.classList.add("gol-focus-entering");
-    themeToggle.addEventListener("animationend", () => {
+  sessionStorage.setItem("golFocusMode", "1");
+  if (!instant) {
+    _flipFromTo(card, first);
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) {
       themeToggle.classList.remove("gol-focus-entering");
-    }, { once: true });
+      void themeToggle.offsetWidth;
+      themeToggle.classList.add("gol-focus-entering");
+      themeToggle.addEventListener("animationend", () => {
+        themeToggle.classList.remove("gol-focus-entering");
+      }, { once: true });
+    }
+    if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
   }
-  if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
 }
 
 function exitFocus(card) {
@@ -1248,6 +1273,7 @@ function exitFocus(card) {
   card.classList.remove("gol-focus-active");
   document.body.classList.remove("gol-focus-mode");
   document.documentElement.style.overflow = "";
+  sessionStorage.removeItem("golFocusMode");
   // Slide-out toggle verso l'alto (position: fixed autonomo nella classe)
   const themeToggle = document.getElementById("theme-toggle");
   if (themeToggle) {

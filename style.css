@@ -4,6 +4,7 @@
   --text:         #ffffff;
   --text-dim:     rgba(255,255,255,0.25);
   --bg-glyph:     rgb(30,30,30);
+  --gol-cell:     rgb(42,42,42);
   --line-bar:     rgba(255,255,255,0.22);
   --cursor-color: #ffffff;
   --accent:       #4ec9b0;
@@ -13,11 +14,12 @@
   --text:         #1a1a1a;
   --text-dim:     rgba(0,0,0,0.22);
   --bg-glyph:     rgb(220,216,208);
+  --gol-cell:     rgb(205,200,192);
   --line-bar:     rgba(0,0,0,0.15);
   --cursor-color: #1a1a1a;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; cursor: default; user-select: none; }
 
 html {
   overflow-x: hidden;
@@ -324,6 +326,20 @@ h1 {
   transition: border-color 0.2s, background 0.2s;
 }
 .project-card.is-expandable { cursor: pointer; }
+.project-card.is-expandable .proj-card-row::after {
+  content: "›";
+  font-size: 1.1em;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  align-self: center;
+  transition: transform 0.3s ease, color 0.2s;
+  line-height: 1;
+}
+.project-card.is-expanded .proj-card-row::after {
+  transform: rotate(90deg);
+  color: var(--text);
+}
+.gol-focus-active .proj-card-row::after { display: none; }
 .proj-card-row {
   position: relative;
   display: flex;
@@ -560,14 +576,14 @@ h1 {
 
 /* ── GoL controls (card progetto Game of Life) ── */
 .gol-controls {
-  display: inline-flex;
+  display: none;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  /* centrato rispetto alla card, non agli elementi adiacenti */
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  padding: 0.25em 0 0.1em;
+}
+.project-card.is-expanded .gol-controls {
+  display: flex;
 }
 .gol-btn {
   font-family: "Hack", monospace;
@@ -643,22 +659,21 @@ h1 {
 /* Speed slider GoL */
 .gol-speed-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
 .gol-speed-label {
+  flex-basis: 100%;
+  text-align: center;
+  margin-bottom: 0.2em;
   font-family: "Hack", monospace;
   font-size: 0.68em;
   color: var(--text-dim);
   flex-shrink: 0;
-  margin-right: 0.25rem;
 }
 .gol-speed-edge {
-  font-family: "Hack", monospace;
-  font-size: 0.6em;
-  color: var(--text-dim);
-  flex-shrink: 0;
-  opacity: 0.6;
+  display: none;
 }
 .gol-speed-slider {
   flex: 1;
@@ -738,13 +753,14 @@ h1 {
 }
 [data-theme="light"] .gol-pattern-option:hover { background: rgba(0,0,0,0.04); }
 
-/* Info card — appare a destra della focus card */
+/* Info card — appare sopra la focus card */
 .gol-info-card {
   display: none;
   position: absolute;
-  left: calc(100% + 1rem);
-  bottom: 0;
-  width: 220px;
+  bottom: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(280px, calc(100vw - 2rem));
   background: var(--bg);
   border: 1px solid var(--line-bar);
   border-radius: 8px;
@@ -754,6 +770,7 @@ h1 {
 }
 .gol-focus-active .gol-info-card.is-visible { display: block; }
 .gol-info-close {
+  display: none;
   position: absolute;
   top: 0.5em;
   right: 0.6em;
@@ -766,6 +783,7 @@ h1 {
   padding: 0;
   transition: color 0.15s;
 }
+.gol-info-card.is-locked .gol-info-close { display: block; }
 .gol-info-close:hover { color: var(--text); }
 .gol-info-title {
   font-size: 0.85em;
@@ -821,7 +839,7 @@ h1 {
 }
 .gol-focus-active .proj-card-row { min-height: 0; gap: 0; }
 .gol-focus-active .proj-card-body { justify-content: center; }
-.gol-focus-active .gol-controls { position: relative; left: auto; transform: none; justify-content: center; flex: 0; }
+.gol-focus-active .gol-controls { display: flex; justify-content: center; }
 .gol-focus-active .gol-speed-row { justify-content: center; }
 .gol-focus-active .gol-pen-row { justify-content: center; }
 
@@ -853,21 +871,52 @@ body.gol-focus-mode > #easter-egg {
 
 /* ── Mobile ── */
 @media (max-width: 600px) {
-  /* Controlli GoL nascosti finché card chiusa */
-  .gol-controls {
-    display: none;
+  /* Font ridotto — esclusi h1, #closing-brace, #brace-line-numbers (usano 7.5vw) */
+  body,
+  .code-row,
+  .reveal-text {
+    font-size: 14px;
   }
 
-  /* Card aperta: controlli sotto il nome */
-  .project-card.is-expanded .proj-card-body {
-    flex-wrap: wrap;
+  /* Elimina banda destra inutilizzata nel testo di presentazione */
+  #reveal-content {
+    padding-right: 0.5rem;
   }
+
+  /* Riduci distanze indentazione su mobile */
+  .code-row .line-numbers,
+  #reveal-line-numbers {
+    margin-right: 2rem;
+  }
+  #name-line-numbers {
+    margin-right: 1.4rem;
+  }
+  .code-block {
+    padding-left: 1em;
+  }
+
+  /* Controlli GoL nascosti finché card chiusa */
+  /* Card aperta: controlli in box separato (già fuori dal proj-card-row) */
   .project-card.is-expanded .gol-controls {
-    display: inline-flex;
-    position: relative;
-    left: auto;
+    padding-top: 0.2em;
+    margin-top: 0;
+  }
+
+  /* Focus mode — card occupa larghezza viewport */
+  .project-card.gol-focus-active {
+    width: calc(100vw - 2rem);
+    left: 1rem;
     transform: none;
-    flex-basis: 100%;
-    margin-top: 0.4em;
+  }
+
+  /* Slider focus mode mobile: occupa tutta la larghezza */
+  .gol-focus-active .gol-speed-slider {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Bottoni focus mode sempre visibili */
+  .gol-focus-active .gol-controls {
+    display: inline-flex;
   }
 }
