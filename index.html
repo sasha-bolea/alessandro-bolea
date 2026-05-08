@@ -9,80 +9,78 @@
 </head>
 <body>
 
-  <div id="custom-cursor"></div>
-
   <div id="theme-toggle"><span id="theme-label">//Devs: Beware</span><span id="theme-dot"></span></div>
 
 
   <h1 class="break-word">
-    <span class="line-numbers" id="name-line-numbers">1</span>
+    <span class="line-numbers" id="name-line-numbers" data-rows="dynamic" data-source="full-name">1</span>
     <span id="full-name"><span id="surname"></span><span id="name"></span></span>
   </h1>
 
-  <div id="indent-line"></div>
-  <span class="line-numbers" id="brace-line-numbers"></span>
-  <span id="closing-brace">}</span>
-
   <section class="reveal-section">
     <div class="reveal-text">
-      <span class="line-numbers" id="reveal-line-numbers"></span>
+      <span class="line-numbers" id="reveal-line-numbers" data-rows="dynamic" data-source="reveal-content"></span>
       <span id="reveal-content"></span>
     </div>
   </section>
 
   <section class="code-section" id="tools-section" style="padding-bottom: 0;">
     <div class="code-row">
-      <span class="line-numbers" id="tools-title-ln"></span>
+      <span class="line-numbers" id="tools-title-ln" data-rows="conditional" data-source="tools-title-text"></span>
       <span id="tools-title-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="tools-body-ln"></span>
+      <span class="line-numbers" id="tools-body-ln" data-rows="dynamic-block" data-source="tools-body"></span>
       <div class="code-block" id="tools-body"></div>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="tools-close-ln"></span>
+      <span class="line-numbers" id="tools-close-ln" data-rows="conditional" data-source="tools-close-text"></span>
       <span id="tools-close-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="tools-empty-ln"></span>
+      <span class="line-numbers" id="tools-empty-ln" data-rows="empty-after" data-source="tools-close-text"></span>
     </div>
   </section>
 
   <section class="code-section" id="projects-section" style="padding-bottom: 0;">
     <div class="code-row">
-      <span class="line-numbers" id="proj-title-ln"></span>
+      <span class="line-numbers" id="proj-title-ln" data-rows="conditional" data-source="proj-title-text"></span>
       <span id="proj-title-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="proj-body-ln"></span>
+      <span class="line-numbers" id="proj-body-ln" data-rows="dynamic-block" data-source="projects-list"></span>
       <div class="code-block" id="projects-list"></div>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="proj-close-ln"></span>
+      <span class="line-numbers" id="proj-close-ln" data-rows="conditional" data-source="proj-close-text"></span>
       <span id="proj-close-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="proj-empty-ln"></span>
+      <span class="line-numbers" id="proj-empty-ln" data-rows="empty-after" data-source="proj-close-text"></span>
     </div>
   </section>
 
   <section class="code-section" id="contact-section" style="padding-bottom: 0;">
     <div class="code-row">
-      <span class="line-numbers" id="contact-title-ln"></span>
+      <span class="line-numbers" id="contact-title-ln" data-rows="conditional" data-source="contact-title-text"></span>
       <span id="contact-title-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="contact-body-ln"></span>
+      <span class="line-numbers" id="contact-body-ln" data-rows="dynamic-block" data-source="contact-body"></span>
       <div class="code-block" id="contact-body"></div>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="contact-close-ln"></span>
+      <span class="line-numbers" id="contact-close-ln" data-rows="conditional" data-source="contact-close-text"></span>
       <span id="contact-close-text"></span>
     </div>
     <div class="code-row">
-      <span class="line-numbers" id="contact-empty-ln"></span>
+      <span class="line-numbers" id="contact-empty-ln" data-rows="empty-after" data-source="contact-close-text"></span>
     </div>
   </section>
+
+  <div id="indent-line"></div>
+  <span class="line-numbers" id="brace-line-numbers" data-rows="empty-after" data-source="contact-close-text"></span>
+  <span id="closing-brace">}</span>
 
   <div id="easter-egg">
     <span id="ee-close" onclick="closeEasterEgg()">×</span>

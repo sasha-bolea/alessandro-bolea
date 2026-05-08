@@ -37,12 +37,10 @@ const nameLn         = document.getElementById("name-line-numbers");
 const indentLine     = document.getElementById("indent-line");
 const closingBrace   = document.getElementById("closing-brace");
 const revealContent  = document.getElementById("reveal-content");
-const revealLn       = document.getElementById("reveal-line-numbers");
 const revealSection  = document.querySelector(".reveal-section");
 
 /* ── State ── */
 let lastNameLines    = 1;
-let lastRevealLines  = 1;
 let skipNameAnim     = false;
 let animFinished     = false;
 let hasTyped         = false;
@@ -113,36 +111,22 @@ function updateIndentLine() {
 }
 
 /* ============================================================
-   NUMERI DI RIGA
+   NUMERI DI RIGA — engine unificato
+   Singola fonte di verità: tutti gli span .line-numbers sono
+   ricalcolati in ordine DOM via recomputeLineNumbers(), in base a
+   data-rows e data-source nell'HTML. Per allungare il sito basta
+   aggiungere span con i giusti attributi: zero JS extra.
    ============================================================ */
-function updateNameLn() {
-  const fullName = document.getElementById("full-name");
-  const slh      = singleLineHeight(fullName);
-  const lines    = Math.max(1, Math.round(fullName.offsetHeight / slh));
+
+// Costruisce stringa "n\nn+1\n...\nn+count-1"
+function lnRange(start, count) {
+  if (count <= 0) return "";
   let s = "";
-  for (let i = 1; i <= lines; i++) s += i + (i < lines ? "\n" : "");
-  nameLn.textContent = s;
-  if (lines !== lastNameLines) {
-    lastNameLines = lines;
-    updateRevealLn();
-    updateRevealPos();
-  }
-  syncLnWidth();
-  updateIndentLine();
+  for (let i = 0; i < count; i++) s += (start + i) + (i < count - 1 ? "\n" : "");
+  return s;
 }
 
-function updateRevealLn() {
-  const slh   = singleLineHeight(revealContent.parentElement);
-  const lines = Math.max(1, Math.round((revealContent.offsetHeight || slh) / slh));
-  const start = lastNameLines + 1;
-  let s = "";
-  for (let i = start; i < start + lines; i++) s += i + (i < start + lines - 1 ? "\n" : "");
-  revealLn.textContent = s;
-  lastRevealLines = lines;
-  updateIndentLine();
-  updateToolsLn();
-}
-
+// Misura altezza di una singola riga renderizzata dentro refEl
 function getLineH(refEl) {
   const tmp = document.createElement("span");
   tmp.textContent = "X";
@@ -154,116 +138,72 @@ function getLineH(refEl) {
   return h;
 }
 
-function lnRange(start, count) {
-  if (count <= 0) return "";
-  let s = "";
-  for (let i = 0; i < count; i++) s += (start + i) + (i < count - 1 ? "\n" : "");
-  return s;
-}
-
-function updateToolsLn() {
-  if (window._toolsLayoutDone) { updateProjLn(); return; }
-  const lh = getLineH();
-  let cur = lastNameLines + lastRevealLines + 1;
-  const titleEl = document.getElementById("tools-title-text");
-  const bodyEl  = document.getElementById("tools-body");
-  const closeEl = document.getElementById("tools-close-text");
-  const tln     = document.getElementById("tools-title-ln");
-  const bln     = document.getElementById("tools-body-ln");
-  const cln     = document.getElementById("tools-close-ln");
-  if (!tln) return;
-
-  if (titleEl.textContent.length) { tln.textContent = String(cur); cur++; }
-  else tln.textContent = "";
-
-  if (bodyEl.offsetHeight > 0) {
-    if (!window._toolsRendering) {
-      const lines = Math.max(1, Math.round(bodyEl.offsetHeight / lh));
-      bln.textContent = lnRange(cur, lines);
-      cur += lines;
-    } else {
-      const lines = bln.textContent ? bln.textContent.split("\n").length : 0;
-      cur += lines;
+// Calcola quante righe rappresenta uno span .line-numbers
+//   data-fixed-rows="N"        → forza N righe (override per crescita smooth)
+//   data-rows="dynamic"        → almeno 1 riga, conta da source.offsetHeight
+//   data-rows="dynamic-block"  → 0 se source.offsetHeight==0; sennò righe da altezza
+//   data-rows="conditional"    → 1 se source.textContent non vuoto, sennò 0
+//   data-rows="empty-after"    → 1 se source.textContent non vuoto (riga vuota dopo sezione)
+function lineRows(span) {
+  const fixed = span.dataset.fixedRows;
+  if (fixed != null) return Math.max(0, parseInt(fixed, 10) || 0);
+  const mode = span.dataset.rows;
+  const sourceId = span.dataset.source;
+  const source = sourceId ? document.getElementById(sourceId) : null;
+  if (!source) return 0;
+  switch (mode) {
+    case "dynamic": {
+      const slh = singleLineHeight(source) || 0;
+      if (!slh) return 1;
+      return Math.max(1, Math.round(source.offsetHeight / slh));
     }
-  } else bln.textContent = "";
-
-  if (closeEl.textContent.length) { cln.textContent = String(cur); cur++; }
-  else cln.textContent = "";
-
-  const emptyLn = document.getElementById("tools-empty-ln");
-  if (emptyLn && emptyLn.textContent.length) { cur++; }
-
-  if (!sec.tools.done) window._afterToolsLine = cur;
-  updateProjLn();
-}
-
-function updateProjLn() {
-  if (window._projLayoutDone) { updateContactLn(); return; }
-  const lh = getLineH();
-  let cur = window._afterToolsLine || (lastNameLines + lastRevealLines + 10);
-  const tln = document.getElementById("proj-title-ln");
-  const bln = document.getElementById("proj-body-ln");
-  const cln = document.getElementById("proj-close-ln");
-  const tEl = document.getElementById("proj-title-text");
-  const bEl = document.getElementById("projects-list");
-  const cEl = document.getElementById("proj-close-text");
-  if (!tln) return;
-
-  if (tEl.textContent.length) { tln.textContent = String(cur); cur++; }
-  else tln.textContent = "";
-
-  if (bEl.offsetHeight > 0) {
-    if (!window._projRendering) {
-      const lines = Math.max(1, Math.round(bEl.offsetHeight / lh));
-      bln.textContent = lnRange(cur, lines);
-      cur += lines;
-    } else {
-      const lines = bln.textContent ? bln.textContent.split("\n").length : 0;
-      cur += lines;
+    case "dynamic-block": {
+      if (source.offsetHeight === 0) return 0;
+      const slh = singleLineHeight(source) || getLineH(source);
+      if (!slh) return 0;
+      return Math.max(1, Math.round(source.offsetHeight / slh));
     }
-  } else bln.textContent = "";
-
-  if (cEl.textContent.length) { cln.textContent = String(cur); cur++; }
-  else cln.textContent = "";
-
-  const projEmptyLn = document.getElementById("proj-empty-ln");
-  if (projEmptyLn && projEmptyLn.textContent.length) { cur++; }
-
-  if (!sec.projects.done) window._afterProjLine = cur;
-  updateContactLn();
+    case "conditional":
+    case "empty-after":
+      return source.textContent.length > 0 ? 1 : 0;
+    default:
+      return 0;
+  }
 }
 
-function updateContactLn() {
-  let cur = window._afterProjLine || (lastNameLines + lastRevealLines + 20);
-  const tln = document.getElementById("contact-title-ln");
-  const bln = document.getElementById("contact-body-ln");
-  const cln = document.getElementById("contact-close-ln");
-  const tEl = document.getElementById("contact-title-text");
-  const bEl = document.getElementById("contact-body");
-  const cEl = document.getElementById("contact-close-text");
-  if (!tln) return;
-
-  if (tEl.textContent.length) { tln.textContent = String(cur); cur++; }
-  else tln.textContent = "";
-  if (bEl.offsetHeight > 0) {
-    const lh = getLineH(bEl) || 28;
-    const lines = Math.max(1, Math.round(bEl.offsetHeight / lh));
-    let s = "";
-    for (let i = 0; i < lines; i++) s += (cur + i) + (i < lines - 1 ? "\n" : "");
-    bln.textContent = s;
-    cur += lines;
-  } else if (bEl.textContent.length) {
-    const lines = bEl.textContent.split("\n").length;
-    let s = "";
-    for (let i = 0; i < lines; i++) s += (cur + i) + (i < lines - 1 ? "\n" : "");
-    bln.textContent = s;
-    cur += lines;
-  } else bln.textContent = "";
-  if (cEl.textContent.length) { cln.textContent = String(cur); cur++; }
-  else cln.textContent = "";
-  const eln = document.getElementById("contact-empty-ln");
-  if (eln) eln.textContent = cEl.textContent.length ? String(cur) : "";
+// Riassegna numeri sequenziali a tutti gli .line-numbers in ordine DOM
+function recomputeLineNumbers() {
+  let cur = 1;
+  document.querySelectorAll(".line-numbers").forEach(span => {
+    const rows = lineRows(span);
+    if (rows > 0) {
+      span.textContent = lnRange(cur, rows);
+      cur += rows;
+    } else {
+      span.textContent = "";
+    }
+  });
 }
+
+// Mantiene lastNameLines (usato per posizionare indent line e brace)
+function updateNameLn() {
+  const fullName = document.getElementById("full-name");
+  const slh      = singleLineHeight(fullName);
+  const lines    = Math.max(1, Math.round(fullName.offsetHeight / slh));
+  if (lines !== lastNameLines) {
+    lastNameLines = lines;
+    updateRevealPos();
+  }
+  recomputeLineNumbers();
+  syncLnWidth();
+  updateIndentLine();
+}
+
+// Alias di compatibilità — un solo motore di numerazione
+function updateRevealLn()  { recomputeLineNumbers(); updateIndentLine(); }
+function updateToolsLn()   { recomputeLineNumbers(); }
+function updateProjLn()    { recomputeLineNumbers(); }
+function updateContactLn() { recomputeLineNumbers(); }
 
 /* ============================================================
    INDENT LINE & CLOSING BRACE
@@ -369,10 +309,6 @@ async function ghostRenderAndPlace() {
   });
 
   // Reset stato per le animazioni reali
-  window._afterToolsLine = undefined;
-  window._afterProjLine  = undefined;
-  window._toolsRendering = false;
-  window._projRendering  = false;
   sNames.forEach(n => { sec[n].skip = false; sec[n].started = false; sec[n].done = false; });
   hasTyped = false;
 
@@ -443,21 +379,17 @@ async function typeRevealText() {
 async function typeToolsSection() {
   const titleEl = document.getElementById("tools-title-text");
   const closeEl = document.getElementById("tools-close-text");
-  const tln = document.getElementById("tools-title-ln");
-  const cln = document.getElementById("tools-close-ln");
-  const emptyLn = document.getElementById("tools-empty-ln");
   const s = sec.tools;
   const titleTxt = "const strumenti = [";
-  const titleNum = String(lastNameLines + lastRevealLines + 1);
 
   titleEl.classList.add("typing-cursor");
   for (let i = 1; i <= titleTxt.length; i++) {
     if (s.skip) { titleEl.textContent = titleTxt; break; }
     titleEl.textContent = titleTxt.substring(0, i);
-    if (tln) tln.textContent = titleNum;
+    recomputeLineNumbers();
     await sleep(rnd(5, 25));
   }
-  if (tln) tln.textContent = titleNum;
+  recomputeLineNumbers();
   titleEl.classList.remove("typing-cursor");
 
   await renderToolsItems();
@@ -466,19 +398,14 @@ async function typeToolsSection() {
   for (let i = 1; i <= 2; i++) {
     if (s.skip) { closeEl.textContent = "];"; break; }
     closeEl.textContent = "];".substring(0, i);
-    if (cln && window._afterToolsLine) {
-      cln.textContent = String(window._afterToolsLine - 2);
-      if (emptyLn) emptyLn.textContent = String(window._afterToolsLine - 1);
-    }
+    recomputeLineNumbers();
     await sleep(rnd(5, 25));
   }
-  if (cln && window._afterToolsLine) {
-    cln.textContent = String(window._afterToolsLine - 2);
-    if (emptyLn) emptyLn.textContent = String(window._afterToolsLine - 1);
-  }
+  recomputeLineNumbers();
   closeEl.classList.remove("typing-cursor");
   s.done = true;
   document.getElementById("tools-section").classList.add("section-done");
+  recomputeLineNumbers();
   await fast(s, 200);
   startSection("projects");
 }
@@ -500,27 +427,26 @@ const techIconMap = {
 };
 
 async function renderToolsItems() {
-  window._toolsRendering = true;
   const bodyEl = document.getElementById("tools-body");
   const bln    = document.getElementById("tools-body-ln");
   bodyEl.innerHTML = "";
-  bln.textContent  = "";
   const wrap = document.createElement("div");
   wrap.className = "tools-categories";
   bodyEl.appendChild(wrap);
 
-  const startNum = lastNameLines + lastRevealLines + 2;
-
-  let lnCur = 0;
+  // Crescita smooth: una riga per tick (60ms) finché shown < target
+  bln.dataset.fixedRows = "0";
+  let shown = 0;
+  let renderingDone = false;
   (async () => {
-    while (window._toolsRendering) {
+    while (!renderingDone) {
       const lh = getLineH(bodyEl) || 28;
-      const targetLines = Math.round(bodyEl.offsetHeight / lh);
-      while (lnCur < targetLines) {
-        bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lnCur);
-        lnCur++;
-        await fast(sec.tools, 60);
+      const target = Math.round(bodyEl.offsetHeight / lh);
+      if (shown < target) {
+        shown++;
+        bln.dataset.fixedRows = String(shown);
       }
+      recomputeLineNumbers();
       await fast(sec.tools, 60);
     }
   })();
@@ -559,25 +485,19 @@ async function renderToolsItems() {
     await fast(sec.tools, 80);
   }
   bodyEl.style.setProperty("--block-h", bodyEl.offsetHeight + "px");
-
-  window._toolsRendering = false;
+  renderingDone = true;
   await sleep(50);
-  const snapLh = getLineH(bodyEl) || 28;
-  const finalLines = Math.max(1, Math.round(bodyEl.offsetHeight / snapLh));
-  while (lnCur < finalLines) {
-    bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lnCur);
-    lnCur++;
+  // Catch-up smooth fino al numero finale di righe
+  const finalLh = getLineH(bodyEl) || 28;
+  const finalTarget = Math.max(1, Math.round(bodyEl.offsetHeight / finalLh));
+  while (shown < finalTarget) {
+    shown++;
+    bln.dataset.fixedRows = String(shown);
+    recomputeLineNumbers();
     if (!sec.tools.skip) await sleep(40);
   }
-  let finalCur = startNum + lnCur;
-  const cln2 = document.getElementById("tools-close-ln");
-  cln2.textContent = String(finalCur);
-  finalCur++;
-  const emptyLn2 = document.getElementById("tools-empty-ln");
-  if (emptyLn2) emptyLn2.textContent = String(finalCur);
-  window._afterToolsLine = finalCur + 1;
-  window._toolsLayoutDone = true;
-  updateProjLn();
+  delete bln.dataset.fixedRows;
+  recomputeLineNumbers();
 }
 
 /* ============================================================
@@ -586,21 +506,17 @@ async function renderToolsItems() {
 async function typeProjSection() {
   const titleEl = document.getElementById("proj-title-text");
   const closeEl = document.getElementById("proj-close-text");
-  const tln = document.getElementById("proj-title-ln");
-  const cln = document.getElementById("proj-close-ln");
-  const emptyLn = document.getElementById("proj-empty-ln");
   const s = sec.projects;
   const titleTxt = "const progetti = [";
-  const titleNum = String(window._afterToolsLine || (lastNameLines + lastRevealLines + 10));
 
   titleEl.classList.add("typing-cursor");
   for (let i = 1; i <= titleTxt.length; i++) {
     if (s.skip) { titleEl.textContent = titleTxt; break; }
     titleEl.textContent = titleTxt.substring(0, i);
-    if (tln) tln.textContent = titleNum;
+    recomputeLineNumbers();
     await sleep(rnd(5, 25));
   }
-  if (tln) tln.textContent = titleNum;
+  recomputeLineNumbers();
   titleEl.classList.remove("typing-cursor");
 
   await renderProjItems();
@@ -609,45 +525,39 @@ async function typeProjSection() {
   for (let i = 1; i <= closeTxt.length; i++) {
     if (s.skip) { closeEl.textContent = closeTxt; break; }
     closeEl.textContent = closeTxt.substring(0, i);
-    if (cln && window._afterProjLine) {
-      cln.textContent = String(window._afterProjLine - 2);
-      if (emptyLn) emptyLn.textContent = String(window._afterProjLine - 1);
-    }
+    recomputeLineNumbers();
     await sleep(rnd(5, 25));
   }
-  if (cln && window._afterProjLine) {
-    cln.textContent = String(window._afterProjLine - 2);
-    if (emptyLn) emptyLn.textContent = String(window._afterProjLine - 1);
-  }
+  recomputeLineNumbers();
   closeEl.classList.remove("typing-cursor");
   s.done = true;
   document.getElementById("projects-section").classList.add("section-done");
+  recomputeLineNumbers();
   await fast(s, 200);
   startSection("contacts");
 }
 
 async function renderProjItems() {
-  window._projRendering = true;
   const listEl = document.getElementById("projects-list");
+  const bln    = document.getElementById("proj-body-ln");
   listEl.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "projects-grid";
   listEl.appendChild(wrap);
 
-  const bln = document.getElementById("proj-body-ln");
-  bln.textContent = "";
-  const startNum = (window._afterToolsLine || (lastNameLines + lastRevealLines + 10)) + 1;
-
-  let lnCur = 0;
+  // Crescita smooth: una riga per tick (60ms) finché shown < target
+  bln.dataset.fixedRows = "0";
+  let shown = 0;
+  let renderingDone = false;
   (async () => {
-    while (window._projRendering) {
+    while (!renderingDone) {
       const lh = getLineH(listEl) || 28;
-      const targetLines = Math.round(listEl.offsetHeight / lh);
-      while (lnCur < targetLines) {
-        bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lnCur);
-        lnCur++;
-        await fast(sec.projects, 60);
+      const target = Math.round(listEl.offsetHeight / lh);
+      if (shown < target) {
+        shown++;
+        bln.dataset.fixedRows = String(shown);
       }
+      recomputeLineNumbers();
       await fast(sec.projects, 60);
     }
   })();
@@ -764,26 +674,21 @@ async function renderProjItems() {
     await fast(sec.projects, 180);
   }
   listEl.style.setProperty("--block-h", listEl.offsetHeight + "px");
-
-  window._projRendering = false;
+  renderingDone = true;
   await sleep(50);
-  const lhF = getLineH(listEl) || 28;
-  const finalLinesPr = Math.max(1, Math.round(listEl.offsetHeight / lhF));
-  while (lnCur < finalLinesPr) {
-    bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lnCur);
-    lnCur++;
+  // Catch-up smooth fino al numero finale di righe
+  const finalLh = getLineH(listEl) || 28;
+  const finalTarget = Math.max(1, Math.round(listEl.offsetHeight / finalLh));
+  while (shown < finalTarget) {
+    shown++;
+    bln.dataset.fixedRows = String(shown);
+    recomputeLineNumbers();
     if (!sec.projects.skip) await sleep(40);
   }
-  const cur = startNum + lnCur;
-  const cln2p = document.getElementById("proj-close-ln");
-  cln2p.textContent = String(cur);
-  const projEmptyLn = document.getElementById("proj-empty-ln");
-  if (projEmptyLn) projEmptyLn.textContent = String(cur + 1);
-  window._afterProjLine = cur + 2;
-  window._projLayoutDone = true;
+  delete bln.dataset.fixedRows;
+  recomputeLineNumbers();
   setupProjResizeObserver();
   requestAnimationFrame(() => document.body.classList.add("cards-animatable"));
-  updateContactLn();
 }
 
 /* ============================================================
@@ -893,11 +798,10 @@ function placeFinalBraceAndLine() {
   closingBrace.style.top  = braceTop + "px";
   const braceLn = document.getElementById("brace-line-numbers");
   if (braceLn) {
-    const lastLn = parseInt(document.getElementById("contact-empty-ln").textContent || "0") || 0;
-    braceLn.textContent = String(lastLn + 1);
     braceLn.style.left = (h1r.left + window.scrollX) + "px";
     braceLn.style.top  = braceTop + "px";
     braceLn.style.display = "block";
+    recomputeLineNumbers();
   }
   const finalH = braceTop + braceH + 8;
   document.body.style.minHeight = "";
@@ -1023,17 +927,6 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
 });
 
 /* ============================================================
-   CUSTOM CURSOR
-   ============================================================ */
-const cursor = document.getElementById("custom-cursor");
-document.addEventListener("mousemove", e => {
-  cursor.style.left = e.clientX + "px";
-  cursor.style.top  = e.clientY + "px";
-});
-document.addEventListener("mouseleave", () => cursor.style.display = "none");
-document.addEventListener("mouseenter", () => cursor.style.display = "block");
-
-/* ============================================================
    GOL CONTROLS
    ============================================================ */
 /* Smoothly expand/collapse a project card via max-height (animate both directions).
@@ -1103,35 +996,21 @@ function setupProjResizeObserver() {
   _projRO.observe(listEl);
 }
 function recomputeProjLines() {
-  if (window._projRendering || !window._projLayoutDone) return;
-  const listEl = document.getElementById("projects-list");
-  const bln = document.getElementById("proj-body-ln");
-  if (!listEl || !bln) return;
-  const lh = getLineH(listEl) || 28;
-  const startNum = (window._afterToolsLine || (lastNameLines + lastRevealLines + 10)) + 1;
   if (_projAppendTimer) { clearInterval(_projAppendTimer); _projAppendTimer = null; }
+  let stableTicks = 0;
+  let lastH = -1;
   _projAppendTimer = setInterval(() => {
-    let lines = bln.textContent ? bln.textContent.split("\n").length : 0;
-    const desired = Math.max(1, Math.round(listEl.offsetHeight / lh));
-    if (lines === desired) {
+    const listEl = document.getElementById("projects-list");
+    if (!listEl) { clearInterval(_projAppendTimer); _projAppendTimer = null; return; }
+    recomputeLineNumbers();
+    if (window.indentDone) repositionBrace();
+    // Stoppa quando l'altezza si stabilizza (~100ms invariata)
+    if (listEl.offsetHeight === lastH) stableTicks++;
+    else { stableTicks = 0; lastH = listEl.offsetHeight; }
+    if (stableTicks >= 4) {
       clearInterval(_projAppendTimer);
       _projAppendTimer = null;
-    } else if (lines < desired) {
-      bln.textContent += (bln.textContent ? "\n" : "") + (startNum + lines);
-      lines++;
-    } else {
-      const arr = bln.textContent.split("\n");
-      arr.pop();
-      bln.textContent = arr.join("\n");
-      lines--;
     }
-    const cln = document.getElementById("proj-close-ln");
-    const eEmpty = document.getElementById("proj-empty-ln");
-    if (cln) cln.textContent = String(startNum + lines);
-    if (eEmpty) eEmpty.textContent = String(startNum + lines + 1);
-    window._afterProjLine = startNum + lines + 2;
-    updateContactLn();
-    if (window.indentDone) repositionBrace();
   }, 25);
 }
 
@@ -1259,7 +1138,7 @@ function enterFocus(card) {
   document.body.appendChild(card);
   card.classList.add("gol-focus-active");
   document.body.classList.add("gol-focus-mode");
-  document.body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
   _flipFromTo(card, first);
   if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
 }
@@ -1268,7 +1147,7 @@ function exitFocus(card) {
   const first = card.getBoundingClientRect();
   card.classList.remove("gol-focus-active");
   document.body.classList.remove("gol-focus-mode");
-  document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
   // Reparent dove era prima + libera min-height pinnata
   if (_golCardOriginalParent) {
     _golCardOriginalParent.style.minHeight = "";
