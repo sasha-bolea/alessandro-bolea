@@ -900,7 +900,9 @@ function placeFinalBraceAndLine() {
     braceLn.style.display = "block";
   }
   const finalH = braceTop + braceH + 8;
+  document.body.style.minHeight = "";
   document.body.style.height = finalH + "px";
+  document.documentElement.style.height = finalH + "px";
   window.__maxScroll = Math.max(0, finalH - window.innerHeight);
   if (!window.__scrollClampBound) {
     window.__scrollClampBound = true;
