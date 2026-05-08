@@ -34,8 +34,16 @@ body {
 }
 
 /* ── Theme toggle ── */
+@keyframes theme-toggle-slide-in {
+  from { transform: translateY(-110%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes theme-toggle-slide-out {
+  from { transform: translateY(0);     opacity: 1; }
+  to   { transform: translateY(-110%); opacity: 0; }
+}
 #theme-toggle {
-  position: fixed;
+  position: absolute;
   top: 1.4rem;
   right: 2rem;
   color: var(--text-dim);
@@ -44,6 +52,19 @@ body {
   z-index: 100;
   user-select: none;
   transition: color 0.2s;
+}
+/* In focus mode diventa fixed per restare visibile mentre la pagina è coperta */
+body.gol-focus-mode #theme-toggle {
+  position: fixed;
+}
+#theme-toggle.gol-focus-entering {
+  animation: theme-toggle-slide-in 0.45s cubic-bezier(0.22,1,0.36,1);
+}
+/* position: fixed autonomo — body.gol-focus-mode già rimosso quando l'animazione gira */
+#theme-toggle.gol-focus-leaving {
+  position: fixed;
+  pointer-events: none;
+  animation: theme-toggle-slide-out 0.35s ease-in forwards;
 }
 #theme-toggle:hover { color: var(--text); }
 [data-theme="light"] #theme-toggle { color: rgba(0,0,0,0.6); }
@@ -304,6 +325,7 @@ h1 {
 }
 .project-card.is-expandable { cursor: pointer; }
 .proj-card-row {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -542,7 +564,10 @@ h1 {
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  /* centrato rispetto alla card, non agli elementi adiacenti */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .gol-btn {
   font-family: "Hack", monospace;
@@ -671,6 +696,90 @@ h1 {
   transform: scale(1.2);
 }
 
+/* ── GoL pattern picker ── */
+.gol-pattern-wrap {
+  position: relative;
+  display: none; /* visibile solo in focus mode */
+}
+.gol-focus-active .gol-pattern-wrap { display: block; }
+
+.gol-pattern-dropdown {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--line-bar);
+  border-radius: 6px;
+  padding: 0.3em 0;
+  min-width: 10em;
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.gol-pattern-dropdown.is-open { display: flex; }
+
+.gol-pattern-option {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Hack", monospace;
+  font-size: 0.88em;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 0.42em 1em;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.gol-pattern-option:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.04);
+}
+[data-theme="light"] .gol-pattern-option:hover { background: rgba(0,0,0,0.04); }
+
+/* Info card — appare a destra della focus card */
+.gol-info-card {
+  display: none;
+  position: absolute;
+  left: calc(100% + 1rem);
+  bottom: 0;
+  width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--line-bar);
+  border-radius: 8px;
+  padding: 1em 1.2em 1em;
+  font-family: "Hack", monospace;
+  pointer-events: auto;
+}
+.gol-focus-active .gol-info-card.is-visible { display: block; }
+.gol-info-close {
+  position: absolute;
+  top: 0.5em;
+  right: 0.6em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  color: var(--text-dim);
+  line-height: 1;
+  padding: 0;
+  transition: color 0.15s;
+}
+.gol-info-close:hover { color: var(--text); }
+.gol-info-title {
+  font-size: 0.85em;
+  color: var(--text);
+  margin: 0 0 0.5em;
+  padding-right: 1.2em;
+}
+.gol-info-desc {
+  font-size: 0.78em;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin: 0;
+}
+
 /* ============================================================
    GOL FOCUS MODE — card morpha in controller fixed-bottom
    ============================================================ */
@@ -712,7 +821,7 @@ h1 {
 }
 .gol-focus-active .proj-card-row { min-height: 0; gap: 0; }
 .gol-focus-active .proj-card-body { justify-content: center; }
-.gol-focus-active .gol-controls { justify-content: center; flex: 0; }
+.gol-focus-active .gol-controls { position: relative; left: auto; transform: none; justify-content: center; flex: 0; }
 .gol-focus-active .gol-speed-row { justify-content: center; }
 .gol-focus-active .gol-pen-row { justify-content: center; }
 
@@ -755,6 +864,9 @@ body.gol-focus-mode > #easter-egg {
   }
   .project-card.is-expanded .gol-controls {
     display: inline-flex;
+    position: relative;
+    left: auto;
+    transform: none;
     flex-basis: 100%;
     margin-top: 0.4em;
   }

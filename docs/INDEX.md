@@ -1,6 +1,6 @@
 # alessandro-bolea — Wiki progetto
 
-Aggiornato: 2026-05-07 17:02
+Aggiornato: 2026-05-08 15:19
 
 Sito personale di Alessandro Bolea. Estetica "code editor": numeri di riga,
 indentazione visibile, parentesi graffe, tipo monospace. Tema dark/light togglabile.
@@ -15,7 +15,7 @@ indentazione visibile, parentesi graffe, tipo monospace. Tema dark/light togglab
 File alla root (no `src/`):
 - [`index.html`](../index.html) — markup unica pagina, sezioni `reveal`, `tools`, `projects`, `contact`
 - [`style.css`](../style.css) — tema, layout sezioni `.code-section`, indent line via `.code-block::before`
-- [`script.js`](../script.js) — typing animation, line numbers dinamici, indent line tween, card progetti
+- [`script.js`](../script.js) — typing animation, line numbers dinamici via `recomputeLineNumbers()`, indent line tween, card progetti
 - [`gol.js`](../gol.js) — Game of Life toroidale come sfondo (canvas full-document)
 
 ## Sezione progetti — espansione card (feature recente)
@@ -25,7 +25,7 @@ Ogni progetto ha campo opzionale `dettagli`. Se presente:
 - transizione smooth via `max-height` misurato (`scrollHeight`)
 - `pumpLayoutDuring(400)` rAF loop aggiorna `--block-h` e `repositionBrace`
   ogni frame, mantenendo indent line e graffa allineate
-- `recomputeProjLines()` (ResizeObserver) aggiunge/rimuove numeri uno per tick
+- `recomputeLineNumbers()` (engine unificato, vedi sezione sotto) aggiunge/rimuove numeri uno per tick
 - `.no-block-transition` disattiva temporaneamente la transition CSS su
   `.code-block::before` durante il pump per evitare lag di 320ms
 
@@ -98,13 +98,78 @@ deve essere espansa per accedere al focus btn).
 `enterFocus`/`exitFocus` perché la rimozione/restituzione della card cambia
 `#projects-list.offsetHeight` → `--block-h` deve aggiornarsi via rAF tick.
 
+**Theme toggle in focus mode**: `#theme-toggle` è `position: absolute` normalmente
+(scrolla via). In focus mode diventa `position: fixed` via `body.gol-focus-mode`
+selettore. Entrata: classe `.gol-focus-entering` (keyframe `from: translateY(-110%)`)
+→ slide-down. Uscita: `.gol-focus-leaving` porta `position: fixed` autonomo
+(perché `gol-focus-mode` è già rimosso dal body) + animazione slide-up con `forwards`.
+
+### Pattern selector (focus mode)
+Bottone griglia in `.gol-pen-row` → dropdown con 5 pattern predefiniti.
+Solo visibile in `.gol-focus-active` (`.gol-pattern-wrap { display: none }` default).
+
+`placePatternCentered(name)` in `gol.js`:
+- Bounding box pattern → offset verso centro **viewport** (non documento)
+- `cx = innerWidth/2/cellSize`, `cy = (scrollY + innerHeight/2)/cellSize`
+- Necessario perché canvas è alto quanto tutto il documento (`scrollHeight`)
+- Pulisce griglia, pausa sim, resetta stagnation counter
+
+Info card (`.gol-info-card`): `position: absolute; left: calc(100% + 1rem); bottom: 0`
+relativo alla focus card. Hover su opzione → mostra descrizione. Click → carica
+pattern + lock visibilità (`_infoLocked`). Hover su altro pattern aggiorna
+sempre il contenuto anche se locked. X chiude e resetta.
+
+### Fix: parseHex rgb()
+`--bg-glyph` in light mode = `rgb(220,216,208)`. `parseHex` originale gestiva
+solo `#hex` → `parseInt("rgb...", 16)` = `NaN` → bitwise 0 → target fade sempre
+nero → fade uscita focus in light mode invisibile. Fix: regex `rgba?\\((\\d+),(\\d+),(\\d+)\\)`
+prima del parse hex.
+
+## Pagine wiki
+## Engine numeri di riga (refactor 2026-05-08)
+
+Precedentemente ogni sezione gestiva i propri numeri con stato globale separato
+(`_afterToolsLine`, `_afterProjLine`, ecc.) → numeri sbagliati frequenti.
+
+**Nuovo approccio — unica source of truth:**
+- `data-rows` e `data-source` su ogni `<span class="line-numbers">` in HTML
+- `lineRows(span)` legge la modalità: `dynamic` (height/lineH), `dynamic-block`
+  (offsetHeight del blocco), `conditional` (0 o 1), `empty-after` (sempre 1)
+- `recomputeLineNumbers()` walka tutti `.line-numbers` in ordine DOM, assegna
+  numeri sequenziali — nessuno stato globale
+- `data-fixed-rows` override temporaneo: durante `renderToolsItems`/`renderProjItems`
+  il body-ln span ha un conteggio fisso mentre crescono uno per volta; rimosso
+  quando il rendering è completo
+- **Smooth growth**: ogni riga aggiunta = `recomputeLineNumbers()` → numeri salgono
+  uno alla volta, animazione percepita
+
+**Perché niente stato globale**: il DOM è già ordinato → basta walkare e contare.
+Stato separato diverge appena una sezione cambia altezza.
+
+## Scroll e overflow (fix 2026-05-08)
+
+- `overflow-x: hidden` solo su `html`, NON su `body` → `position: fixed` funziona
+  correttamente (overflow su body crea containing block per fixed elements in Safari)
+- Focus mode GoL: `document.documentElement.style.overflow = "hidden"` (non body)
+  per lo stesso motivo
+- `placeFinalBraceAndLine`: `body.style.minHeight = ""` prima di settare
+  `documentElement.style.height = finalH` → evita che ghostRender's minHeight
+  vinca sull'altezza clampata
+- `#theme-toggle`: `position: absolute` (non fixed) — resta in cima al documento,
+  scrolla via verso l'alto quando l'utente scrolla. Non segue il viewport.
+
+## Cursore personalizzato — rimosso (2026-05-08)
+
+`#custom-cursor` (div + CSS + JS) rimosso completamente. Causava complessità
+senza beneficio percepito. Ripristinato `cursor: pointer` sulle card espandibili.
+
 ## Pagine wiki
 - [architettura.md](architettura.md) — _(crea se serve)_
 - [api.md](api.md) — _(N/A: sito statico)_
 - [database.md](database.md) — _(N/A)_
 - [user-stories.md](user-stories.md) — _(crea se serve)_
 - [decisions.md](decisions.md) — _(crea se serve)_
-- [CHANGELOG.md](CHANGELOG.md) — _(crea se serve)_
+- [CHANGELOG.md](CHANGELOG.md) — storico sessioni in linguaggio umano
 
 ## Cross-link wiki globale
 - Stub globale: [alessandro-bolea.md](C:/Users/sasha/.claude/wiki/projects/alessandro-bolea.md)

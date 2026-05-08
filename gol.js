@@ -165,6 +165,69 @@
     }
   }
 
+  // ── Pattern predefiniti (focus mode selector) ──
+  const NAMED_PATTERNS = {
+    "gosper-gun": [
+      [24,0],
+      [22,1],[24,1],
+      [12,2],[13,2],[20,2],[21,2],[34,2],[35,2],
+      [11,3],[15,3],[20,3],[21,3],[34,3],[35,3],
+      [0,4],[1,4],[10,4],[16,4],[20,4],[21,4],
+      [0,5],[1,5],[10,5],[14,5],[16,5],[17,5],[22,5],[24,5],
+      [10,6],[16,6],[24,6],
+      [11,7],[15,7],
+      [12,8],[13,8],
+    ],
+    "pulsar": [
+      [2,0],[3,0],[4,0],[8,0],[9,0],[10,0],
+      [0,2],[5,2],[7,2],[12,2],
+      [0,3],[5,3],[7,3],[12,3],
+      [0,4],[5,4],[7,4],[12,4],
+      [2,5],[3,5],[4,5],[8,5],[9,5],[10,5],
+      [2,7],[3,7],[4,7],[8,7],[9,7],[10,7],
+      [0,8],[5,8],[7,8],[12,8],
+      [0,9],[5,9],[7,9],[12,9],
+      [0,10],[5,10],[7,10],[12,10],
+      [2,12],[3,12],[4,12],[8,12],[9,12],[10,12],
+    ],
+    "pentadecathlon": [
+      [1,0],[0,1],[2,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[0,8],[2,8],[1,9],
+    ],
+    "acorn": [
+      [1,0],[3,1],[0,2],[1,2],[4,2],[5,2],[6,2],
+    ],
+    "diehard": [
+      [6,0],[0,1],[1,1],[1,2],[5,2],[6,2],[7,2],
+    ],
+  };
+
+  // Piazza un pattern centrato nel viewport visibile, pulisce prima e mette in pausa
+  function placePatternCentered(name) {
+    const cells = NAMED_PATTERNS[name];
+    if (!cells || cols < 4 || rows < 4) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [dx, dy] of cells) {
+      if (dx < minX) minX = dx; if (dx > maxX) maxX = dx;
+      if (dy < minY) minY = dy; if (dy > maxY) maxY = dy;
+    }
+    const cs = Math.max(4, tweaks.cellSize);
+    // Centro viewport in coordinate griglia (canvas parte da y=0 doc, scrollY è l'offset)
+    const vpCx = Math.floor(window.innerWidth / 2 / cs);
+    const vpCy = Math.floor((window.scrollY + window.innerHeight / 2) / cs);
+    const ox = vpCx - Math.floor((maxX - minX + 1) / 2) - minX;
+    const oy = vpCy - Math.floor((maxY - minY + 1) / 2) - minY;
+    grid.fill(0);
+    age.fill(0);
+    for (const [dx, dy] of cells) {
+      const x = dx + ox, y = dy + oy;
+      if (x >= 0 && x < cols && y >= 0 && y < rows) grid[y * cols + x] = 1;
+    }
+    tweaks.paused = true;
+    lastHash = hashGrid(grid);
+    stagnationCounter = 0;
+    draw(true);
+  }
+
   function injectRandomPattern() {
     if (cols < 8 || rows < 8) return;
     const x = Math.floor(Math.random() * (cols - 6)) + 1;
@@ -239,11 +302,12 @@
     age = nextAge;
 
     // Rileva stagnazione (stesso stato per N step)
-    if (tweaks.stagnationInjection) {
+    if (tweaks.stagnationInjection && !document.body.classList.contains("gol-focus-mode")) {
       const h = hashGrid(grid);
       if (h === lastHash) {
         stagnationCounter++;
-        if (stagnationCounter >= 3) {
+        if (stagnationCounter >= 2) {
+          injectRandomPattern();
           injectRandomPattern();
           stagnationCounter = 0;
         }
@@ -274,10 +338,13 @@
   let _cellFadeStart = 0;
   let _cellFadeDur = 600;
 
-  // Parsing hex "#rgb" o "#rrggbb" → [r,g,b]
+  // Parsing colore → [r,g,b]. Supporta "#rgb", "#rrggbb", "rgb(...)", "rgba(...)"
   function parseHex(h) {
     if (!h) return [30, 30, 30];
-    h = h.trim().replace(/^#/, "");
+    h = h.trim();
+    const rgb = h.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (rgb) return [+rgb[1], +rgb[2], +rgb[3]];
+    h = h.replace(/^#/, "");
     if (h.length === 3) h = h.split("").map(c => c + c).join("");
     const n = parseInt(h, 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -385,7 +452,7 @@
     if (!tweaks.paused && t - lastStep >= Math.max(50, tweaks.speedMs)) {
       step();
       stepCount++;
-      if (stepCount % 6 === 0) injectEdgeGlider();
+      if (stepCount % 3 === 0 && !document.body.classList.contains("gol-focus-mode")) injectEdgeGlider();
       lastStep = t;
     }
     if (tweaks.paused) lastStep = t;
@@ -470,6 +537,7 @@
       draw(true);
     },
     inject: () => injectRandomPattern(),
+    loadPattern: (name) => placePatternCentered(name),
     // Cambia colore celle con fade.
     // target: hex string (es. "#ffffff") oppure null per tornare al colore tema (CSS var --bg-glyph).
     // durMs: durata fade ms (default 600).

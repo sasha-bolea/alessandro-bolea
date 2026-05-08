@@ -622,6 +622,22 @@ async function renderProjItems() {
               <rect x="10" y="10" width="3" height="3" fill="currentColor"/>
             </svg>
           </button>
+          <div class="gol-pattern-wrap">
+            <button type="button" class="gol-btn gol-pattern-trigger" data-gol-action="pattern-toggle" data-tooltip="Pattern">
+              <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="3" height="3"/><rect x="7" y="2" width="3" height="3"/><rect x="12" y="2" width="3" height="3" fill="currentColor" stroke="none"/>
+                <rect x="2" y="7" width="3" height="3" fill="currentColor" stroke="none"/><rect x="7" y="7" width="3" height="3"/><rect x="12" y="7" width="3" height="3"/>
+                <rect x="2" y="12" width="3" height="3"/><rect x="7" y="12" width="3" height="3" fill="currentColor" stroke="none"/><rect x="12" y="12" width="3" height="3"/>
+              </svg>
+            </button>
+            <div class="gol-pattern-dropdown" role="menu">
+              <button type="button" class="gol-pattern-option" data-gol-pattern="gosper-gun">gosper gun</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="pulsar">pulsar</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="pentadecathlon">pentadecathlon</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="acorn">acorn</button>
+              <button type="button" class="gol-pattern-option" data-gol-pattern="diehard">diehard</button>
+            </div>
+          </div>
           <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; controller">
             <svg class="gol-ico gol-ico-focus-on" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="2,6 2,2 6,2"/><polyline points="14,6 14,2 10,2"/>
@@ -640,6 +656,7 @@ async function renderProjItems() {
           <p class="proj-card-expanded-text">${p.dettagli}</p>
         </div>
       </div>` : ``;
+    const golInfoCardHtml = p.isGol ? `<div class="gol-info-card" aria-hidden="true"><button type="button" class="gol-info-close" aria-label="Chiudi">×</button><p class="gol-info-title"></p><p class="gol-info-desc"></p></div>` : ``;
     card.innerHTML = `
       <div class="proj-card-row">
         <div class="proj-card-body">
@@ -649,7 +666,8 @@ async function renderProjItems() {
         <div class="proj-card-footer">${techTags}${linkHtml}</div>
       </div>
       ${speedSliderHtml}
-      ${expandedHtml}`;
+      ${expandedHtml}
+      ${golInfoCardHtml}`;
     if (p.isGol) bindGolControls(card);
     if (p.dettagli) {
       card.classList.add("is-expandable");
@@ -1077,6 +1095,78 @@ function bindGolControls(root) {
     });
   }
 
+  // Pattern picker (solo focus mode)
+  const GOL_PATTERN_INFO = {
+    "gosper-gun":     { title: "Gosper Glider Gun", desc: "Prima struttura capace di generazione infinita, scoperta da William Gosper nel 1970. Produce un glider ogni 30 generazioni." },
+    "pulsar":         { title: "Pulsar", desc: "Oscillatore di periodo 3. Uno dei pattern più simmetrici e visivamente ipnotici del GoL." },
+    "pentadecathlon": { title: "Pentadecathlon", desc: "Oscillatore di periodo 15 — tra i più alti per una struttura così semplice. Prende il nome dal ciclo olimpico." },
+    "acorn":          { title: "Acorn", desc: "Methuselah da 7 celle. Cresce in modo caotico per 5206 generazioni prima di stabilizzarsi in 633 celle." },
+    "diehard":        { title: "Diehard", desc: "Methuselah da 7 celle. Sopravvive per 130 generazioni, poi scompare completamente senza lasciare traccia." },
+  };
+  const patternTrigger = root.querySelector('[data-gol-action="pattern-toggle"]');
+  const patternDropdown = root.querySelector('.gol-pattern-dropdown');
+  const card = root.closest(".project-card");
+  const infoCard = card ? card.querySelector('.gol-info-card') : null;
+  let _infoLocked = false; // true dopo selezione pattern — card rimane visibile finché X chiude
+
+  function _populateInfo(key) {
+    if (!infoCard) return;
+    const data = GOL_PATTERN_INFO[key];
+    if (!data) return;
+    infoCard.querySelector('.gol-info-title').textContent = data.title;
+    infoCard.querySelector('.gol-info-desc').textContent = data.desc;
+    infoCard.classList.add("is-visible");
+  }
+  function _hideInfo() {
+    if (!infoCard) return;
+    infoCard.classList.remove("is-visible");
+    _infoLocked = false;
+  }
+
+  if (patternTrigger && patternDropdown) {
+    patternTrigger.addEventListener("click", e => {
+      stop(e);
+      patternDropdown.classList.toggle("is-open");
+    });
+
+    patternDropdown.querySelectorAll('[data-gol-pattern]').forEach(btn => {
+      // Hover: mostra info del pattern corrente, sempre
+      btn.addEventListener("mouseenter", () => {
+        _populateInfo(btn.dataset.golPattern);
+      });
+      btn.addEventListener("mouseleave", () => {
+        if (!_infoLocked) _hideInfo();
+      });
+      // Click: carica pattern, blocca info card visibile
+      btn.addEventListener("click", e => {
+        stop(e);
+        const name = btn.dataset.golPattern;
+        if (window.__gol) {
+          window.__gol.loadPattern(name);
+          _syncPaused(true);
+        }
+        _populateInfo(name);
+        _infoLocked = true;
+        patternDropdown.classList.remove("is-open");
+      });
+    });
+
+    // X sulla info card chiude
+    if (infoCard) {
+      infoCard.querySelector('.gol-info-close').addEventListener("click", e => {
+        stop(e);
+        _hideInfo();
+      });
+    }
+
+    // Chiudi dropdown cliccando fuori
+    document.addEventListener("click", e => {
+      if (!patternTrigger.contains(e.target) && !patternDropdown.contains(e.target)) {
+        patternDropdown.classList.remove("is-open");
+      }
+    });
+  }
+
   // Toggle focus mode (FLIP morph + fade sezioni)
   const focusBtn = root.querySelector('[data-gol-action="focus"]');
   if (focusBtn) {
@@ -1140,6 +1230,16 @@ function enterFocus(card) {
   document.body.classList.add("gol-focus-mode");
   document.documentElement.style.overflow = "hidden";
   _flipFromTo(card, first);
+  // Slide-in theme toggle dall'alto (keyframe from parte da -110% anche se base è visibile)
+  const themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) {
+    themeToggle.classList.remove("gol-focus-entering");
+    void themeToggle.offsetWidth; // forza reflow per restart animazione
+    themeToggle.classList.add("gol-focus-entering");
+    themeToggle.addEventListener("animationend", () => {
+      themeToggle.classList.remove("gol-focus-entering");
+    }, { once: true });
+  }
   if (typeof pumpLayoutDuring === "function") pumpLayoutDuring(FOCUS_DUR + 100);
 }
 
@@ -1148,6 +1248,15 @@ function exitFocus(card) {
   card.classList.remove("gol-focus-active");
   document.body.classList.remove("gol-focus-mode");
   document.documentElement.style.overflow = "";
+  // Slide-out toggle verso l'alto (position: fixed autonomo nella classe)
+  const themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) {
+    themeToggle.classList.remove("gol-focus-entering");
+    themeToggle.classList.add("gol-focus-leaving");
+    themeToggle.addEventListener("animationend", () => {
+      themeToggle.classList.remove("gol-focus-leaving");
+    }, { once: true });
+  }
   // Reparent dove era prima + libera min-height pinnata
   if (_golCardOriginalParent) {
     _golCardOriginalParent.style.minHeight = "";
