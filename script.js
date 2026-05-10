@@ -1043,6 +1043,10 @@ function pumpLayoutDuring(durationMs) {
   const tick = () => {
     const list = document.getElementById("projects-list");
     if (list) setBlockH(list);
+    // Ricalcola line-numbers durante la transizione: lineRows() per
+    // "dynamic-block" pinna minHeight sul source, impedendo allo
+    // shrink di propagarsi e al ResizeObserver di scattare in chiusura.
+    recomputeLineNumbers();
     if (window.indentDone) repositionBrace();
     if (performance.now() < _layoutPumpEnd) {
       requestAnimationFrame(tick);
@@ -1109,6 +1113,10 @@ function bindGolControls(root) {
   if (!toggleBtn) return;
 
   const stop = e => { e.stopPropagation(); e.preventDefault(); };
+
+  // Click sui gap dei controlli (tra i bottoni) non deve far espandere la card
+  const ctrlsEl = root.querySelector(".gol-controls");
+  if (ctrlsEl) ctrlsEl.addEventListener("click", e => e.stopPropagation());
 
   toggleBtn.addEventListener("click", e => {
     stop(e);

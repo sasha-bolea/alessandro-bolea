@@ -316,6 +316,7 @@ h1 {
   padding-top: 0.2em;
 }
 .project-card {
+  position: relative;
   border-radius: 8px;
   border: 1px solid var(--line-bar);
   display: flex;
@@ -576,16 +577,24 @@ h1 {
   user-select: none;
 }
 
-/* ── GoL controls (card progetto Game of Life) ── */
+/* ── GoL controls (card progetto Game of Life) ──
+   Desktop: posizionati in absolute, centrati sulla larghezza della card,
+   sovrapposti alla riga della card (sempre visibili anche con card chiusa).
+   Mobile: layout statico, mostrati solo a card aperta (override sotto). */
 .gol-controls {
-  display: none;
+  display: flex;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  padding: 0.25em 0 0.1em;
-}
-.project-card.is-expanded .gol-controls {
-  display: flex;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: clamp(64px, 6.5vw, 82px);
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+  pointer-events: auto;
 }
 .gol-btn {
   font-family: "Hack", monospace;
@@ -841,7 +850,14 @@ h1 {
 }
 .gol-focus-active .proj-card-row { min-height: 0; gap: 0; }
 .gol-focus-active .proj-card-body { justify-content: center; }
-.gol-focus-active .gol-controls { display: flex; justify-content: center; }
+.gol-focus-active .gol-controls {
+  display: flex;
+  justify-content: center;
+  position: static;
+  transform: none;
+  height: auto;
+  padding: 0.25em 0 0.1em;
+}
 .gol-focus-active .gol-speed-row { justify-content: center; }
 .gol-focus-active .gol-pen-row { justify-content: center; }
 
@@ -900,9 +916,17 @@ body.gol-focus-mode > #easter-egg {
     padding-left: 1em;
   }
 
-  /* Controlli GoL nascosti finché card chiusa */
-  /* Card aperta: controlli in box separato (già fuori dal proj-card-row) */
+  /* Mobile: ripristina layout originale dei controlli GoL —
+     statici, sotto la riga, visibili solo a card aperta. */
+  .gol-controls {
+    display: none;
+    position: static;
+    transform: none;
+    height: auto;
+    padding: 0.25em 0 0.1em;
+  }
   .project-card.is-expanded .gol-controls {
+    display: flex;
     padding-top: 0.2em;
     margin-top: 0;
   }
