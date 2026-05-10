@@ -163,6 +163,50 @@ Stato separato diverge appena una sezione cambia altezza.
 `#custom-cursor` (div + CSS + JS) rimosso completamente. Causava complessità
 senza beneficio percepito. Ripristinato `cursor: pointer` sulle card espandibili.
 
+## Scroll bug strutturale — `body { display: flow-root }` (2026-05-10)
+
+**Sintomo**: scrollbar mostrava sempre uno "spazio fantasma" sotto la graffa
+finale `}` (≈ `innerHeight`). Su mobile lo scroll-clamp `__maxScroll` bloccava
+prima della fine reale del documento — impossibile arrivare al fondo.
+
+**Causa root** (richiesta diagnosi step-by-step in console):
+- `script.js:104` `updateRevealPos()` imposta `revealSection.style.marginTop =
+  "100vh"` per creare la zona "scroll-to-reveal" iniziale.
+- `.reveal-section` è il primo figlio in-flow di `<body>`. Il suo `margin-top`
+  COLLASSAVA fuori da body verso `<html>` (margin collapse standard CSS).
+- Effetto: `body.offsetTop` rendered = 551 (= innerHeight) invece di 0.
+  `body.offsetHeight = 1751` (corretto), ma `body.bottom = 551 + 1751 = 2302`
+  in coordinate documento.
+- `documentElement.scrollHeight` = 2302 ≠ `finalH` (1751) → scrollbar mostrava
+  551px di area extra inaccessibile.
+- I sintomi correlati al canvas GoL (chicken-and-egg sull'altezza
+  `scrollHeight`-driven) erano effetto secondario: il canvas si "riempiva"
+  della scrollHeight gonfiata.
+
+**Fix definitivo**: `body { display: flow-root }` — crea un Block Formatting
+Context su body, contiene il margin di `.reveal-section` (e di qualunque
+futuro primo figlio con margin-top alto). Body bottom rendered = body box bottom
+= `finalH`. `documentElement.scrollHeight` coincide con `__maxScroll +
+innerHeight`. Mobile non si blocca prima del fondo.
+
+**Fix ausiliari (in `placeFinalBraceAndLine`)**:
+- `documentElement.style.minHeight = ""` — il session-restore (riga 1464) imposta
+  `min-height: scrollY + innerHeight + 200` su `<html>`. Senza pulizia,
+  l'`height: finalH` è ignorato.
+- `window.__gol.resize()` — forza ri-misura del canvas dopo lo shrink.
+  Senza questa chiamata l'interval-poll 800ms non scatta perché
+  `scrollHeight ≈ canvas.height` (chicken-and-egg). Esposto nuovo metodo
+  `resize` su `window.__gol` (`gol.js:545+`).
+
+**Fix in `gol.js resize()`**: usa `parseFloat(document.body.style.height)`
+come fonte di verità se settata; altrimenti azzera canvas e misura
+`scrollHeight`. Bypassa il chicken-and-egg.
+
+**Lezione architetturale**: prima di pre-calcolare l'altezza del documento
+(via ghostRender o pinning), assicurarsi che il box di body **contenga**
+tutti i margin dei figli. Margin collapse di `<body>` con il primo figlio
+in-flow è un classico foot-gun.
+
 ## Pagine wiki
 - [architettura.md](architettura.md) — _(crea se serve)_
 - [api.md](api.md) — _(N/A: sito statico)_

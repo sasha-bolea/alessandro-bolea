@@ -50,11 +50,22 @@
   function resize() {
     dpr = Math.max(1, window.devicePixelRatio || 1);
     const w = window.innerWidth;
-    const docH = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight,
-      window.innerHeight
-    );
+    // Se body ha height esplicita (impostata da placeFinalBraceAndLine),
+    // usala come fonte di verit&agrave;: bypassa la misura di scrollHeight,
+    // che &egrave; chicken-and-egg col canvas (absolute, full-doc).
+    // Fallback: azzera canvas e misura scrollHeight per il primo load.
+    const explicit = parseFloat(document.body.style.height);
+    let docH;
+    if (explicit > 0) {
+      docH = explicit;
+    } else {
+      canvas.style.height = "0px";
+      docH = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+        window.innerHeight
+      );
+    }
     const h = docH;
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
@@ -567,6 +578,10 @@
     },
     inject: () => injectRandomPattern(),
     loadPattern: (name) => placePatternCentered(name),
+    // Forza una ri-misura del canvas (es. dopo che il documento si rimpicciolisce
+    // a fine typing in placeFinalBraceAndLine, l'interval da 800 ms non
+    // scatta perché lo scrollHeight è "auto-bloccato" sull'altezza del canvas).
+    resize: () => resize(),
     // Cambia colore celle con fade.
     // target: hex string (es. "#ffffff") oppure null per tornare al colore tema (CSS var --bg-glyph).
     // durMs: durata fade ms (default 600).

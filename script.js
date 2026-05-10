@@ -874,8 +874,17 @@ function placeFinalBraceAndLine() {
   }
   const finalH = braceTop + braceH + 8;
   document.body.style.minHeight = "";
+  // Pulisci anche minHeight su <html> (eventualmente impostato dal session-restore
+  // a (scrollY + innerHeight + 200)px): se rimane > finalH, "height" non lo rispetta
+  // e lo scroll può sforare la graffa.
+  document.documentElement.style.minHeight = "";
   document.body.style.height = finalH + "px";
   document.documentElement.style.height = finalH + "px";
+  // Forza ri-misura del canvas GoL: senza questo il canvas (absolute, full-doc)
+  // resta gigante perch&eacute; il poll-interval interno legge scrollHeight =
+  // canvas.height e non rileva shrink. Risultato: scrollbar mostra spazio oltre
+  // la graffa.
+  if (window.__gol && window.__gol.resize) window.__gol.resize();
   window.__maxScroll = Math.max(0, finalH - window.innerHeight);
   if (!window.__scrollClampBound) {
     window.__scrollClampBound = true;
@@ -890,6 +899,8 @@ function placeFinalBraceAndLine() {
       }
     }, { passive: false });
     window.addEventListener("touchmove", e => {
+      // Non bloccare drag su slider/input interattivi (es. velocità GoL su mobile)
+      if (e.target && e.target.closest && e.target.closest("input, [data-tweaks-ignore]")) return;
       if (window.__maxScroll != null && window.scrollY >= window.__maxScroll) {
         e.preventDefault();
       }

@@ -33,6 +33,11 @@ body {
   background-color: var(--bg);
   color: var(--text);
   transition: background-color 0.4s, color 0.4s;
+  /* Crea un Block Formatting Context: il margin-top di .reveal-section
+     (impostato a 100vh da updateRevealPos) altrimenti collassa fuori da
+     body, spostandone l'origine renderizzata di 551px. Cos&igrave; viene
+     contenuto dentro body, e body.offsetTop=0, body.bottom = finalH. */
+  display: flow-root;
 }
 
 /* ── Theme toggle ── */
@@ -167,6 +172,10 @@ h1 {
 }
 #tools-section, #projects-section, #contact-section { min-height: 80vh; }
 #tools-section.section-done, #projects-section.section-done, #contact-section.section-done { min-height: 0; }
+/* Ultima sezione: niente padding-bottom a fine typing.
+   Il padding faceva straripare lo scrollHeight oltre la graffa,
+   creando spazio "fantasma" dopo lo scroll-clamp. */
+#contact-section.section-done { padding-bottom: 0; }
 .code-row {
   display: flex;
   align-items: flex-start;
