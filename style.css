@@ -764,13 +764,12 @@ h1 {
 }
 [data-theme="light"] .gol-pattern-option:hover { background: rgba(0,0,0,0.04); }
 
-/* Info card — appare sopra la focus card */
+/* Info card — desktop: a destra dei comandi; mobile: sopra */
 .gol-info-card {
   display: none;
   position: absolute;
-  bottom: calc(100% + 0.75rem);
-  left: 50%;
-  transform: translateX(-50%);
+  left: calc(100% + 1rem);
+  bottom: 0;
   width: min(280px, calc(100vw - 2rem));
   background: var(--bg);
   border: 1px solid var(--line-bar);
@@ -947,5 +946,12 @@ body.gol-focus-mode > #easter-egg {
   /* Bottoni focus mode sempre visibili */
   .gol-focus-active .gol-controls {
     display: inline-flex;
+  }
+
+  /* Info card pattern — su mobile sopra ai comandi (no spazio a destra) */
+  .gol-info-card {
+    left: 50%;
+    bottom: calc(100% + 0.75rem);
+    transform: translateX(-50%);
   }
 }

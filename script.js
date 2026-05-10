@@ -631,9 +631,9 @@ async function renderProjItems() {
           <span class="gol-speed-edge">veloce</span>
         </div>
         <div class="gol-pen-row">
-          <button type="button" class="gol-btn gol-pen-btn is-active" data-gol-pen="cell" data-tooltip="Singola cella">
-            <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="5.5" y="5.5" width="5" height="5" fill="currentColor"/>
+          <button type="button" class="gol-btn gol-pen-btn is-active" data-gol-pen="none" data-tooltip="Puntatore (non disegna)">
+            <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-width="0.6" stroke-linejoin="round">
+              <path d="M3 2 L3 12.2 L5.6 9.6 L7.4 13.6 L8.9 13 L7.1 9 L10.6 9 Z"/>
             </svg>
           </button>
           <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="draw" data-tooltip="Disegna trascinando">
@@ -1142,7 +1142,7 @@ function bindGolControls(root) {
 
   const penBtns = root.querySelectorAll('[data-gol-pen]');
   if (penBtns.length) {
-    const currentPen = window.__gol ? window.__gol.get().pen : "cell";
+    const currentPen = window.__gol ? window.__gol.get().pen : "none";
     penBtns.forEach(btn => {
       btn.classList.toggle("is-active", btn.dataset.golPen === currentPen);
       btn.addEventListener("click", e => {

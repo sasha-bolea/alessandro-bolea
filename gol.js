@@ -13,7 +13,7 @@
     "seed": "random",
     "stagnationInjection": true,
     "clickToAdd": true,
-    "pen": "cell",
+    "pen": "none",
     "trailFade": 0.92,
     "paused": false
   }/*EDITMODE-END*/;
@@ -515,6 +515,7 @@
 
   function handlePointerDown(e) {
     if (!tweaks.clickToAdd) return;
+    if (tweaks.pen === "none") return;
     if (isIgnoredTarget(e.target)) return;
     const [x, y] = cellFromEvent(e);
     if (tweaks.pen === "draw") {
