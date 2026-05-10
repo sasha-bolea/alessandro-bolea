@@ -91,6 +91,14 @@
           if (age) newAge[y * cols + x] = age[y * oldCols + x];
         }
       }
+      // Seed delle aree appena aggiunte (nuove righe sotto / nuove colonne
+      // a destra). Senza questo, su mobile il documento cresce dopo il primo
+      // resize() (gol.js gira in defer: prima del ghostRender → docH ≈ innerHeight)
+      // e tutte le celle nelle nuove righe restano a 0 → gradient vuoto verso
+      // il basso. La fascia superiore (preservata) resta densa.
+      if (cols > oldCols || rows > oldRows) {
+        seedNewArea(newGrid, cols, rows, oldCols, oldRows, tweaks.seed);
+      }
     } else {
       seedInitial(newGrid, cols, rows, tweaks.seed);
     }
@@ -135,6 +143,20 @@
     // random sparse (default)
     for (let i = 0; i < g.length; i++) {
       if (Math.random() < 0.18) g[i] = 1;
+    }
+  }
+
+  // Seed delle sole celle nuove dopo un resize che ingrandisce il grid.
+  // Una cella e' "nuova" se y >= oldR o x >= oldC. Le altre sono gia' state
+  // preservate dal grid precedente e non devono essere toccate.
+  // Density 0.18 (matching seedInitial random). Mode "empty" rispettato.
+  function seedNewArea(g, c, r, oldC, oldR, mode) {
+    if (mode === "empty") return;
+    for (let y = 0; y < r; y++) {
+      for (let x = 0; x < c; x++) {
+        const isNew = (y >= oldR) || (x >= oldC);
+        if (isNew && Math.random() < 0.18) g[y * c + x] = 1;
+      }
     }
   }
 
