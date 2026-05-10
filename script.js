@@ -898,10 +898,20 @@ function placeFinalBraceAndLine() {
         e.preventDefault();
       }
     }, { passive: false });
+    // Track Y precedente per determinare direzione del gesto: solo lo
+    // scroll verso il basso oltre __maxScroll va bloccato; quello verso
+    // l'alto deve restare libero.
+    let _lastTouchY = 0;
+    window.addEventListener("touchstart", e => {
+      if (e.touches && e.touches[0]) _lastTouchY = e.touches[0].clientY;
+    }, { passive: true });
     window.addEventListener("touchmove", e => {
       // Non bloccare drag su slider/input interattivi (es. velocità GoL su mobile)
       if (e.target && e.target.closest && e.target.closest("input, [data-tweaks-ignore]")) return;
-      if (window.__maxScroll != null && window.scrollY >= window.__maxScroll) {
+      const cur = (e.touches && e.touches[0]) ? e.touches[0].clientY : _lastTouchY;
+      const delta = cur - _lastTouchY; // > 0 = dito gi&ugrave; (scroll up); < 0 = dito su (scroll down)
+      _lastTouchY = cur;
+      if (window.__maxScroll != null && window.scrollY >= window.__maxScroll && delta < 0) {
         e.preventDefault();
       }
     }, { passive: false });
