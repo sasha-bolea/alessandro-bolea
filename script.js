@@ -17,7 +17,7 @@ const iMieiProgetti = [
     nome:   "Game of Life",
     desc:   "Sfondo interattivo del sito",
     dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">Ideato da <span class="gol-hl">John H. Conway</span> nel <span class="gol-hl">1970</span>. Automa cellulare su griglia 2D: ogni cella è viva o morta. Ad ogni step l'intera griglia evolve simultaneamente in base al numero di vicini vivi nella propria cella 3×3.</p>
+  <p class="gol-desc-intro">Creato dal matematico <span class="gol-hl">John Horton Conway</span> nel <span class="gol-hl">1970</span>, il Game of Life è un automa cellulare che simula l'evoluzione di una popolazione su una griglia. Non è un gioco nel senso tradizionale — non ci sono giocatori né obiettivi — ma una simulazione che si svolge da sola. Ogni cella può essere viva ■ o morta □ e, in base allo stato delle celle circostanti, il suo stato cambierà alla generazione successiva — dimostrando come comportamenti complessi possano emergere da poche semplici regole.</p>
   <p class="gol-desc-section-title">// regole</p>
   <div class="gol-rules-row">
     <div class="gol-rule">
