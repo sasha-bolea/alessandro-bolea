@@ -325,24 +325,33 @@
     injectGlider(grid, cols, rows, x, y, ori);
   }
 
-  // ── Step (toroidal) ──
+  // ── Step (bounded, bordi = vicini morti) ──
   function step() {
     const c = cols, r = rows;
     const next = new Uint8Array(c * r);
     const nextAge = new Uint16Array(c * r);
     for (let y = 0; y < r; y++) {
-      const ym1 = (y - 1 + r) % r;
-      const yp1 = (y + 1) % r;
+      const ym1 = y - 1;
+      const yp1 = y + 1;
       const rowOff = y * c;
-      const rowOffM = ym1 * c;
-      const rowOffP = yp1 * c;
       for (let x = 0; x < c; x++) {
-        const xm1 = (x - 1 + c) % c;
-        const xp1 = (x + 1) % c;
-        const n =
-          grid[rowOffM + xm1] + grid[rowOffM + x] + grid[rowOffM + xp1] +
-          grid[rowOff  + xm1] +                      grid[rowOff  + xp1] +
-          grid[rowOffP + xm1] + grid[rowOffP + x] + grid[rowOffP + xp1];
+        const xm1 = x - 1;
+        const xp1 = x + 1;
+        let n = 0;
+        if (ym1 >= 0) {
+          const rowOffM = ym1 * c;
+          if (xm1 >= 0) n += grid[rowOffM + xm1];
+          n += grid[rowOffM + x];
+          if (xp1 < c) n += grid[rowOffM + xp1];
+        }
+        if (xm1 >= 0) n += grid[rowOff + xm1];
+        if (xp1 < c)  n += grid[rowOff + xp1];
+        if (yp1 < r) {
+          const rowOffP = yp1 * c;
+          if (xm1 >= 0) n += grid[rowOffP + xm1];
+          n += grid[rowOffP + x];
+          if (xp1 < c) n += grid[rowOffP + xp1];
+        }
         const alive = grid[rowOff + x];
         let live = 0;
         if (alive) live = (n === 2 || n === 3) ? 1 : 0;

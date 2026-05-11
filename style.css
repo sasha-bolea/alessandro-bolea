@@ -192,7 +192,7 @@ h1 {
   flex: 1;
   min-width: 0;
   border-left: none;
-  padding-left: 1em;
+  padding-left: 1cm;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   position: relative;
@@ -262,10 +262,10 @@ h1 {
   display: inline-block;
   font-family: "Hack", monospace;
   font-size: 1em;
-  padding: 2px 8px;
+  padding: 0.1em 0.45em;
   border: 1px solid var(--line-bar);
   color: var(--text-dim);
-  margin: 2px 3px 2px 0;
+  margin: 0.1em 0.15em 0.1em 0;
   white-space: nowrap;
   transition: border-color 0.18s, color 0.18s;
 }
@@ -281,15 +281,15 @@ h1 {
 }
 .tools-icons-row { display: flex; flex-wrap: wrap; gap: 0.65em; }
 .tool-icon-card {
-  width: clamp(64px, 6.5vw, 82px);
-  height: clamp(64px, 6.5vw, 82px);
-  border-radius: 10px;
+  width: 4.5em;
+  height: 4.5em;
+  border-radius: 0.55em;
   border: 1px solid var(--line-bar);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 0.3em;
   transition: border-color 0.2s, background 0.2s, transform 0.15s;
 }
 .tool-icon-card:hover {
@@ -299,8 +299,8 @@ h1 {
 }
 [data-theme="light"] .tool-icon-card:hover { background: rgba(0,0,0,0.04); }
 .tool-icon-card img {
-  width: clamp(24px, 2.6vw, 32px);
-  height: clamp(24px, 2.6vw, 32px);
+  width: 1.8em;
+  height: 1.8em;
   display: block;
 }
 [data-theme="dark"] .tool-icon-card img[data-invert] { filter: invert(1) opacity(0.75); }
@@ -326,7 +326,7 @@ h1 {
 }
 .project-card {
   position: relative;
-  border-radius: 8px;
+  border-radius: 0.45em;
   border: 1px solid var(--line-bar);
   display: flex;
   flex-direction: column;
@@ -356,7 +356,7 @@ h1 {
   flex-direction: row;
   align-items: center;
   gap: 2em;
-  min-height: clamp(64px, 6.5vw, 82px);
+  min-height: 4.5em;
 }
 .proj-card-expanded {
   max-height: 0;
@@ -364,7 +364,7 @@ h1 {
   overflow: hidden;
   margin: 0;
   white-space: normal;
-  transition: max-height 320ms ease, opacity 240ms ease, margin 320ms ease, padding 320ms ease;
+  transition: max-height 540ms ease-in-out, opacity 380ms ease-in-out, margin 540ms ease-in-out, padding 540ms ease-in-out;
 }
 .proj-card-expanded-inner { min-height: 0; }
 .project-card.is-expanded .proj-card-expanded {
@@ -376,7 +376,7 @@ h1 {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-height 320ms ease, opacity 240ms ease;
+  transition: max-height 540ms ease-in-out, opacity 380ms ease-in-out;
 }
 .project-card.is-expanded .gol-speed-wrap {
   max-height: 220px;
@@ -426,7 +426,7 @@ h1 {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4em;
-  min-width: clamp(100px, 14vw, 180px);
+  min-width: 5.5em;
   flex-shrink: 0;
   border: none;
   padding: 0;
@@ -437,7 +437,7 @@ h1 {
 .project-card:hover .proj-filename { color: var(--text); }
 .proj-status {
   font-size: 1em;
-  padding: 1px 7px;
+  padding: 0.06em 0.4em;
   border: 1px solid;
   font-family: "Hack", monospace;
 }
@@ -470,10 +470,10 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 0.25em;
   flex-shrink: 0;
   justify-content: flex-end;
-  min-width: clamp(80px, 12vw, 160px);
+  min-width: 5em;
 }
 .project-card:hover .proj-card-footer { border: none; }
 .proj-open-link {
@@ -599,7 +599,7 @@ h1 {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  height: clamp(64px, 6.5vw, 82px);
+  height: 4.5em;
   margin: 0;
   padding: 0;
   z-index: 2;
@@ -612,7 +612,7 @@ h1 {
   background: transparent;
   color: var(--text-dim);
   border: 1px solid var(--line-bar);
-  border-radius: 6px;
+  border-radius: 0.35em;
   width: 2em;
   height: 2em;
   display: inline-flex;
@@ -638,8 +638,8 @@ h1 {
 
 /* SVG icons inside gol-btn */
 .gol-ico {
-  width: 18px;
-  height: 18px;
+  width: 1em;
+  height: 1em;
   display: block;
   fill: none;
   stroke: currentColor;
@@ -658,7 +658,7 @@ h1 {
 .gol-btn[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 0.4em);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -667,8 +667,8 @@ h1 {
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--line-bar);
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: 0.3em;
+  padding: 0.15em 0.45em;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s;
@@ -707,16 +707,16 @@ h1 {
 .gol-speed-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 0.7em;
+  height: 0.7em;
   border-radius: 50%;
   background: var(--text-dim);
   border: 1px solid var(--line-bar);
   transition: background 0.15s, transform 0.12s;
 }
 .gol-speed-slider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 0.7em;
+  height: 0.7em;
   border-radius: 50%;
   background: var(--text-dim);
   border: 1px solid var(--line-bar);
@@ -921,7 +921,7 @@ body.gol-focus-mode > #easter-egg {
     margin-right: 1.4rem;
   }
   .code-block {
-    padding-left: 1em;
+    padding-left: 1cm;
   }
 
   /* Mobile: ripristina layout originale dei controlli GoL —

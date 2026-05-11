@@ -798,7 +798,7 @@ async function typeContactSection() {
     a.href = href;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.innerHTML = `<span class="contact-indent">    </span><span class="contact-key"></span><span class="contact-sep">:</span><span class="contact-val contact-cursor"></span>`;
+    a.innerHTML = `<span class="contact-key"></span><span class="contact-sep">:</span><span class="contact-val contact-cursor"></span>`;
     bodyEl.appendChild(a);
     setBlockH(bodyEl);
     updateIndentLineH(a);
@@ -1022,33 +1022,68 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
 /* Smoothly expand/collapse a project card via max-height (animate both directions).
    On open: set explicit px height of inner, then unset to 'none' after transition (so dynamic content fits).
    On close: re-pin current px height, then on next frame set to 0 to trigger collapse transition. */
+// Durata transizione card in ms — deve corrispondere al valore in CSS (.proj-card-expanded, .gol-speed-wrap)
+const CARD_TRANSITION_MS = 540;
+
+/* Scroll animato con la stessa curva ease-in-out e durata del CSS transition.
+   Garantisce che scroll e collapse partano insieme e finiscano insieme. */
+function animateScrollTo(targetY, durationMs) {
+  const startY = window.scrollY;
+  const delta = targetY - startY;
+  if (Math.abs(delta) < 1) return;
+  const startTime = performance.now();
+  function easeInOut(t) {
+    return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+  }
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / durationMs);
+    window.scrollTo(0, Math.round(startY + delta * easeInOut(progress)));
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function setCardExpanded(card, open) {
   const exp = card.querySelector(".proj-card-expanded");
   if (!exp) return;
   const inner = exp.querySelector(".proj-card-expanded-inner");
   if (!inner) return;
+  const speedWrap = card.querySelector(".gol-speed-wrap");
   exp.removeEventListener("transitionend", exp._golEndHandler || (()=>{}));
   if (open) {
     card.classList.add("is-expanded");
     const target = inner.scrollHeight;
     exp.style.maxHeight = target + "px";
+    if (speedWrap) speedWrap.style.maxHeight = speedWrap.scrollHeight + "px";
     const onEnd = e => {
       if (e.propertyName !== "max-height") return;
       exp.style.maxHeight = "none";
+      if (speedWrap) speedWrap.style.maxHeight = "none";
       exp.removeEventListener("transitionend", onEnd);
     };
     exp._golEndHandler = onEnd;
     exp.addEventListener("transitionend", onEnd);
   } else {
-    const cur = exp.scrollHeight;
-    exp.style.maxHeight = cur + "px";
+    const expH = exp.scrollHeight;
+    const speedH = speedWrap ? speedWrap.scrollHeight : 0;
+    exp.style.maxHeight = expH + "px";
+    if (speedWrap) speedWrap.style.maxHeight = speedH + "px";
+
+    // Forza reflow: i valori px sopra devono essere committati prima che
+    // la transizione parta, altrimenti il browser salta direttamente a 0.
     void exp.offsetHeight;
-    requestAnimationFrame(() => {
-      card.classList.remove("is-expanded");
-      exp.style.maxHeight = "0px";
-    });
+
+    // Scroll animato + inizio collapse nello stesso frame sincrono: stessa
+    // curva ease-in-out e stessa durata del CSS transition → un'unica motion.
+    const newMaxScroll = document.documentElement.scrollHeight - window.innerHeight - expH - speedH;
+    if (window.scrollY > newMaxScroll) {
+      animateScrollTo(Math.max(0, newMaxScroll), CARD_TRANSITION_MS);
+    }
+    card.classList.remove("is-expanded");
+    exp.style.maxHeight = "0px";
+    if (speedWrap) speedWrap.style.maxHeight = "0px";
   }
-  pumpLayoutDuring(400);
+  pumpLayoutDuring(CARD_TRANSITION_MS + 80);
 }
 
 /* rAF loop che ricalcola brace + indent-line per durationMs ms.
@@ -1074,6 +1109,9 @@ function pumpLayoutDuring(durationMs) {
     } else {
       _layoutPumpRunning = false;
       if (list) list.classList.remove("no-block-transition");
+      // Canvas shrink: dopo l'animazione, ridimensiona il canvas GoL alla nuova
+      // altezza del documento (già aggiornata da repositionBrace nell'ultimo tick).
+      if (window.__gol && window.__gol.resize) window.__gol.resize();
     }
   };
   requestAnimationFrame(tick);
@@ -1472,6 +1510,7 @@ function repositionBrace() {
   const bh = closingBrace.offsetHeight || 42;
   const finalH = braceTop + bh + 8;
   document.body.style.height = finalH + "px";
+  document.documentElement.style.height = finalH + "px";
   window.__maxScroll = Math.max(0, finalH - window.innerHeight);
 }
 
