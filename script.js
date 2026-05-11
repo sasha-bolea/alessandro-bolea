@@ -17,21 +17,57 @@ const iMieiProgetti = [
     nome:   "Game of Life",
     desc:   "Sfondo interattivo del sito",
     dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">Ideato da <span class="gol-hl">John H. Conway</span> nel <span class="gol-hl">1970</span>. Automa cellulare su griglia 2D: ogni cella è viva&nbsp;<span class="gol-cell--on">■</span>&nbsp;o morta&nbsp;<span class="gol-cell--off">□</span>. Ad ogni step l'intera griglia evolve simultaneamente in base al numero di vicini vivi nella propria cella 3×3.</p>
+  <p class="gol-desc-intro">Ideato da <span class="gol-hl">John H. Conway</span> nel <span class="gol-hl">1970</span>. Automa cellulare su griglia 2D: ogni cella è viva o morta. Ad ogni step l'intera griglia evolve simultaneamente in base al numero di vicini vivi nella propria cella 3×3.</p>
   <p class="gol-desc-section-title">// regole</p>
   <div class="gol-rules-row">
-    <div class="gol-rule"><pre class="gol-grid">□ □ □
-□ <span class="gol-cell--on">■</span> □  →  <span class="gol-result--off">□</span>
-□ □ □</pre><span class="gol-rule-label">solitudine<br>&lt;&nbsp;2 vicini</span></div>
-    <div class="gol-rule"><pre class="gol-grid">□ <span class="gol-cell--on">■</span> □
-□ <span class="gol-cell--on">■</span> □  →  <span class="gol-result--on">■</span>
-□ □ □</pre><span class="gol-rule-label">sopravvive<br>2–3 vicini</span></div>
-    <div class="gol-rule"><pre class="gol-grid"><span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span>
-<span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span>  →  <span class="gol-result--off">□</span>
-□ □ <span class="gol-cell--on">■</span></pre><span class="gol-rule-label">folla<br>&gt;&nbsp;3 vicini</span></div>
-    <div class="gol-rule"><pre class="gol-grid">· <span class="gol-cell--on">■</span> ·
-<span class="gol-cell--on">■</span> □ <span class="gol-cell--on">■</span>  →  <span class="gol-result--on">■</span>
-· □ ·</pre><span class="gol-rule-label">nascita<br>=&nbsp;3 vicini</span></div>
+    <div class="gol-rule">
+      <div class="gol-rule-icon">
+        <div class="gol-rule-grid">
+          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
+          <b class="gi d"></b><b class="gi a c"></b><b class="gi d"></b>
+          <b class="gi d"></b><b class="gi d"></b><b class="gi a"></b>
+        </div>
+        <span class="gol-rule-arrow">→</span>
+        <b class="gi r d"></b>
+      </div>
+      <span class="gol-rule-label">solitudine<br>&lt;&nbsp;2 vicini</span>
+    </div>
+    <div class="gol-rule">
+      <div class="gol-rule-icon">
+        <div class="gol-rule-grid">
+          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
+          <b class="gi d"></b><b class="gi a c"></b><b class="gi d"></b>
+          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
+        </div>
+        <span class="gol-rule-arrow">→</span>
+        <b class="gi r a"></b>
+      </div>
+      <span class="gol-rule-label">sopravvive<br>2–3 vicini</span>
+    </div>
+    <div class="gol-rule">
+      <div class="gol-rule-icon">
+        <div class="gol-rule-grid">
+          <b class="gi a"></b><b class="gi a"></b><b class="gi a"></b>
+          <b class="gi a"></b><b class="gi a c"></b><b class="gi d"></b>
+          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
+        </div>
+        <span class="gol-rule-arrow">→</span>
+        <b class="gi r d"></b>
+      </div>
+      <span class="gol-rule-label">folla<br>&gt;&nbsp;3 vicini</span>
+    </div>
+    <div class="gol-rule">
+      <div class="gol-rule-icon">
+        <div class="gol-rule-grid">
+          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
+          <b class="gi a"></b><b class="gi d c"></b><b class="gi a"></b>
+          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
+        </div>
+        <span class="gol-rule-arrow">→</span>
+        <b class="gi r a"></b>
+      </div>
+      <span class="gol-rule-label">nascita<br>=&nbsp;3 vicini</span>
+    </div>
   </div>
   <p class="gol-desc-section-title">// tecnologie</p>
   <div class="gol-tech-row"><span class="tech-tag">JS</span><span class="tech-tag">Canvas 2D</span><span class="tech-tag">requestAnimationFrame</span></div>
