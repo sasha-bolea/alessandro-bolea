@@ -672,6 +672,10 @@ async function renderProjItems() {
       ? `<a href="${p.link}" target="_blank" class="proj-open-link">→ open</a>`
       : ``;
     const golHtml = p.isGol ? `
+      <button type="button" class="gol-focus-handle" aria-label="Riduci controlli">
+        <svg class="gol-ico gol-ico-handle-down" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,6 8,10 12,6"/></svg>
+        <svg class="gol-ico gol-ico-handle-up" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,10 8,6 12,10"/></svg>
+      </button>
       <div class="gol-controls" data-tweaks-ignore>
         <button type="button" class="gol-btn" data-gol-action="toggle" aria-label="Pausa/Play" data-tooltip="Pausa / Play">
           <svg class="gol-ico gol-ico-pause" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="12"/><line x1="10" y1="4" x2="10" y2="12"/></svg>
@@ -1368,6 +1372,14 @@ function bindGolControls(root) {
       window.__gol && window.__gol.setCellColor(isFocus ? _focusCellColor() : null, FOCUS_DUR + 220);
     });
   }
+
+  const handleBtn = root.querySelector('.gol-focus-handle');
+  if (handleBtn) {
+    handleBtn.addEventListener('click', e => {
+      stop(e);
+      root.classList.toggle('gol-focus-collapsed');
+    });
+  }
 }
 
 /* ============================================================
@@ -1434,6 +1446,7 @@ function enterFocus(card, instant) {
 }
 
 function exitFocus(card) {
+  card.classList.remove("gol-focus-collapsed");
   const first = card.getBoundingClientRect();
   card.classList.remove("gol-focus-active");
   document.body.classList.remove("gol-focus-mode");
