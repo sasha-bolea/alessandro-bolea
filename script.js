@@ -30,7 +30,7 @@ const iMieiProgetti = [
         <span class="gol-rule-arrow">→</span>
         <b class="gi r d"></b>
       </div>
-      <span class="gol-rule-label">solitudine<br>&lt;&nbsp;2 vicini</span>
+      <span class="gol-rule-label">Una cella viva con meno di 2 vicini vivi → muore (sottopopolazione)</span>
     </div>
     <div class="gol-rule">
       <div class="gol-rule-icon">
@@ -42,7 +42,7 @@ const iMieiProgetti = [
         <span class="gol-rule-arrow">→</span>
         <b class="gi r a"></b>
       </div>
-      <span class="gol-rule-label">sopravvive<br>2–3 vicini</span>
+      <span class="gol-rule-label">Una cella viva con 2 o 3 vicini vivi → sopravvive</span>
     </div>
     <div class="gol-rule">
       <div class="gol-rule-icon">
@@ -54,7 +54,7 @@ const iMieiProgetti = [
         <span class="gol-rule-arrow">→</span>
         <b class="gi r d"></b>
       </div>
-      <span class="gol-rule-label">folla<br>&gt;&nbsp;3 vicini</span>
+      <span class="gol-rule-label">Una cella viva con più di 3 vicini vivi → muore (sovrappopolazione)</span>
     </div>
     <div class="gol-rule">
       <div class="gol-rule-icon">
@@ -66,7 +66,7 @@ const iMieiProgetti = [
         <span class="gol-rule-arrow">→</span>
         <b class="gi r a"></b>
       </div>
-      <span class="gol-rule-label">nascita<br>=&nbsp;3 vicini</span>
+      <span class="gol-rule-label">Una cella morta con esattamente 3 vicini vivi → nasce</span>
     </div>
   </div>
   <p class="gol-desc-section-title">// tecnologie</p>
