@@ -74,6 +74,7 @@ body.gol-focus-mode #theme-toggle {
   pointer-events: none;
   animation: theme-toggle-slide-out 0.35s ease-in forwards;
 }
+#theme-toggle { cursor: pointer; }
 #theme-toggle:hover { color: var(--text); }
 [data-theme="light"] #theme-toggle { color: rgba(0,0,0,0.6); }
 #theme-dot {
@@ -497,6 +498,7 @@ h1 {
   text-decoration: none;
   padding: 0.25em 0;
   transition: color 0.18s;
+  cursor: pointer;
 }
 .contact-key { color: var(--text); }
 .contact-val { color: var(--text-dim); }
