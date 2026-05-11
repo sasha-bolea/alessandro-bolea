@@ -924,6 +924,20 @@ body.gol-focus-mode > #easter-egg {
     padding-left: 0.6rem;
   }
 
+  /* Slider GoL: thumb più grande e touch-action corretta per il drag su mobile */
+  .gol-speed-slider {
+    touch-action: pan-y;
+    height: 4px;
+  }
+  .gol-speed-slider::-webkit-slider-thumb {
+    width: 1.6em;
+    height: 1.6em;
+  }
+  .gol-speed-slider::-moz-range-thumb {
+    width: 1.6em;
+    height: 1.6em;
+  }
+
   /* Mobile: ripristina layout originale dei controlli GoL —
      statici, sotto la riga, visibili solo a card aperta. */
   .gol-controls {
