@@ -1156,6 +1156,10 @@ function setCardExpanded(card, open) {
     card.classList.remove("is-expanded");
     exp.style.maxHeight = "0px";
     if (speedWrap) speedWrap.style.maxHeight = "0px";
+    if (card.querySelector(".gol-controls")) {
+      window.__gol && window.__gol.set({ pen: "none" });
+      _syncPen("none");
+    }
   }
   pumpLayoutDuring(CARD_TRANSITION_MS + 80);
 }
