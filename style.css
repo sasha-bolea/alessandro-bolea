@@ -20,6 +20,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; cursor: default; user-select: none; }
+a, button, [role="button"] { cursor: pointer; }
 
 html {
   overflow-x: hidden;
