@@ -1299,7 +1299,7 @@ function bindGolControls(root) {
     "diehard":        { title: "Diehard", desc: "Methuselah da 7 celle. Sopravvive per 130 generazioni, poi scompare completamente senza lasciare traccia." },
     "lwss":           { title: "Lightweight Spaceship", desc: "Il più piccolo degli spaceship standard. Si muove orizzontalmente di 2 celle ogni 4 generazioni (velocità c/2). Scoperto da John Conway nel 1970." },
     "beacon":         { title: "Beacon", desc: "Oscillatore di periodo 2 formato da due blocchi 2×2 sovrapposti a un angolo. Uno dei più semplici e comuni oscillatori del GoL." },
-    "pi-heptomino":   { title: "Pi-Heptomino", desc: "Methuselah da 7 celle a forma di π. Evolve in modo caotico per 173 generazioni prima di stabilizzarsi in una configurazione con glider." },
+    "pi-heptomino":   { title: "Pi-Heptomino (il mio preferito)", desc: "Methuselah da 7 celle a forma di π. Evolve in modo caotico per 173 generazioni prima di stabilizzarsi in una configurazione con glider." },
     "switch-engine":  { title: "Switch Engine", desc: "Struttura da 8 celle scoperta da Charles Corderman nel 1971. Cresce in modo infinito lasciando una scia di detriti, muovendosi in diagonale a velocità c/12." },
     "copperhead":     { title: "Copperhead", desc: "Spaceship di periodo 10 scoperto nel 2016. Si muove verticalmente a velocità c/10. Notevole per la sua forma compatta e simmetrica." },
   };
@@ -1386,45 +1386,8 @@ function bindGolControls(root) {
   if (handleBtn) {
     handleBtn.addEventListener('click', e => {
       stop(e);
-      const isCollapsed = root.classList.toggle('gol-focus-collapsed');
-      _syncInfoCardCollapse(root, isCollapsed);
+      root.classList.toggle('gol-focus-collapsed');
     });
-  }
-}
-
-let _infoCardOriginalParent = null;
-
-// Reparenta l'info card nel body quando la focus card è collassata
-// (il transform sulla card impedisce position:fixed ai figli)
-function _syncInfoCardCollapse(card, isCollapsed) {
-  const infoCard = card.querySelector('.gol-info-card') || _infoCardOriginalParent && document.body.querySelector('.gol-info-card--detached');
-  const ic = card.querySelector('.gol-info-card') || document.querySelector('.gol-info-card--detached');
-  if (!ic) return;
-
-  if (isCollapsed && ic.classList.contains('is-visible')) {
-    _infoCardOriginalParent = card;
-    const cardRect = card.getBoundingClientRect();
-    ic.classList.add('gol-info-card--detached');
-    document.body.appendChild(ic);
-    // Posiziona fixed: a destra della focus card su desktop, centrato su mobile
-    const isMobile = window.innerWidth <= 600;
-    if (isMobile) {
-      ic.style.left = '50%';
-      ic.style.transform = 'translateX(-50%)';
-    } else {
-      ic.style.left = (cardRect.right + 16) + 'px';
-      ic.style.transform = '';
-    }
-    ic.style.bottom = '0';
-    ic.style.position = 'fixed';
-  } else {
-    const detached = document.querySelector('.gol-info-card--detached');
-    if (detached && _infoCardOriginalParent) {
-      detached.style.cssText = '';
-      detached.classList.remove('gol-info-card--detached');
-      _infoCardOriginalParent.appendChild(detached);
-      _infoCardOriginalParent = null;
-    }
   }
 }
 
@@ -1492,7 +1455,6 @@ function enterFocus(card, instant) {
 }
 
 function exitFocus(card) {
-  _syncInfoCardCollapse(card, false);
   card.classList.remove("gol-focus-collapsed");
   const first = card.getBoundingClientRect();
   card.classList.remove("gol-focus-active");
