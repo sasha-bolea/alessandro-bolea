@@ -20,7 +20,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; cursor: default; user-select: none; }
-a, button, [role="button"] { cursor: pointer; }
+a, a *, button, button *, [role="button"], [role="button"] * { cursor: pointer; }
 
 html {
   overflow-x: hidden;
@@ -74,7 +74,7 @@ body.gol-focus-mode #theme-toggle {
   pointer-events: none;
   animation: theme-toggle-slide-out 0.35s ease-in forwards;
 }
-#theme-toggle { cursor: pointer; }
+#theme-toggle, #theme-toggle * { cursor: pointer; }
 #theme-toggle:hover { color: var(--text); }
 [data-theme="light"] #theme-toggle { color: rgba(0,0,0,0.6); }
 #theme-dot {
