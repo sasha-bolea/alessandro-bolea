@@ -76,7 +76,7 @@ const iMieiProgetti = [
     <tr><td class="gol-iface-key">puntatore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">navigazione, nessun disegno</td></tr>
     <tr><td class="gol-iface-key">disegna</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click / drag aggiunge cellule</td></tr>
     <tr><td class="gol-iface-key">glider</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click piazza un glider casuale</td></tr>
-    <tr><td class="gol-iface-key">modalità focus</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">collega gamepad / tastiera</td></tr>
+    <tr><td class="gol-iface-key">modalità focus</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">schermo intero</td></tr>
   </table>
   <p class="gol-iface-hint">play/pause · clear · reseed · velocità</p>
 </div>`,
