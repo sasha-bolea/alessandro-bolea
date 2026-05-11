@@ -772,13 +772,12 @@ h1 {
   height: 0.55em;
   box-sizing: border-box;
 }
-.gi.d { border: 1px solid var(--text); opacity: 0.22; }
-.gi.a { background: var(--text); opacity: 0.65; }
-.gi.a.c { opacity: 1; box-shadow: 0 0 0 1.5px var(--text); }
-.gi.d.c { opacity: 0.55; border: 1.5px solid var(--text); }
-.gi.r   { width: 0.65em; height: 0.65em; }
-.gi.r.a { opacity: 1; box-shadow: 0 0 5px var(--text); }
-.gi.r.d { opacity: 0.22; }
+.gi.d { border: 1px solid var(--text); opacity: 0.25; }
+.gi.a { background: var(--text); opacity: 0.6; }
+.gi.a.c { opacity: 1; }
+.gi.d.c { opacity: 0.5; }
+.gi.r.a { opacity: 1; }
+.gi.r.d { opacity: 0.25; }
 .gol-rule-arrow { font-size: 0.85em; opacity: 0.55; }
 .gol-rule-label { font-size: 0.9em; line-height: 1.4; }
 /* tecnologie */
