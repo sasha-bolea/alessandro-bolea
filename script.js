@@ -1386,8 +1386,45 @@ function bindGolControls(root) {
   if (handleBtn) {
     handleBtn.addEventListener('click', e => {
       stop(e);
-      root.classList.toggle('gol-focus-collapsed');
+      const isCollapsed = root.classList.toggle('gol-focus-collapsed');
+      _syncInfoCardCollapse(root, isCollapsed);
     });
+  }
+}
+
+let _infoCardOriginalParent = null;
+
+// Reparenta l'info card nel body quando la focus card è collassata
+// (il transform sulla card impedisce position:fixed ai figli)
+function _syncInfoCardCollapse(card, isCollapsed) {
+  const infoCard = card.querySelector('.gol-info-card') || _infoCardOriginalParent && document.body.querySelector('.gol-info-card--detached');
+  const ic = card.querySelector('.gol-info-card') || document.querySelector('.gol-info-card--detached');
+  if (!ic) return;
+
+  if (isCollapsed && ic.classList.contains('is-visible')) {
+    _infoCardOriginalParent = card;
+    const cardRect = card.getBoundingClientRect();
+    ic.classList.add('gol-info-card--detached');
+    document.body.appendChild(ic);
+    // Posiziona fixed: a destra della focus card su desktop, centrato su mobile
+    const isMobile = window.innerWidth <= 600;
+    if (isMobile) {
+      ic.style.left = '50%';
+      ic.style.transform = 'translateX(-50%)';
+    } else {
+      ic.style.left = (cardRect.right + 16) + 'px';
+      ic.style.transform = '';
+    }
+    ic.style.bottom = '0';
+    ic.style.position = 'fixed';
+  } else {
+    const detached = document.querySelector('.gol-info-card--detached');
+    if (detached && _infoCardOriginalParent) {
+      detached.style.cssText = '';
+      detached.classList.remove('gol-info-card--detached');
+      _infoCardOriginalParent.appendChild(detached);
+      _infoCardOriginalParent = null;
+    }
   }
 }
 
@@ -1455,6 +1492,7 @@ function enterFocus(card, instant) {
 }
 
 function exitFocus(card) {
+  _syncInfoCardCollapse(card, false);
   card.classList.remove("gol-focus-collapsed");
   const first = card.getBoundingClientRect();
   card.classList.remove("gol-focus-active");
