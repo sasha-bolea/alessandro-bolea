@@ -16,7 +16,34 @@ const iMieiProgetti = [
   {
     nome:   "Game of Life",
     desc:   "Sfondo interattivo del sito",
-    dettagli: "Cellular automaton di Conway in JS vanilla. Canvas 2D con topologia toroidale (effetto Pac-Man). Iniezione periodica di gliders dai bordi per mantenere viva la simulazione. Click sullo sfondo aggiunge una cellula. Controlli rapidi nella card: pause/play, clear, reseed.",
+    dettagli: `<div class="gol-desc">
+  <p class="gol-desc-intro">Ideato da <span class="gol-hl">John H. Conway</span> nel <span class="gol-hl">1970</span>. Automa cellulare su griglia 2D: ogni cella è viva&nbsp;<span class="gol-cell--on">■</span>&nbsp;o morta&nbsp;<span class="gol-cell--off">□</span>. Ad ogni step l'intera griglia evolve simultaneamente in base al numero di vicini vivi nella propria cella 3×3.</p>
+  <p class="gol-desc-section-title">// regole</p>
+  <div class="gol-rules-row">
+    <div class="gol-rule"><pre class="gol-grid">□ □ □
+□ <span class="gol-cell--on">■</span> □  →  <span class="gol-result--off">□</span>
+□ □ □</pre><span class="gol-rule-label">solitudine<br>&lt;&nbsp;2 vicini</span></div>
+    <div class="gol-rule"><pre class="gol-grid">□ <span class="gol-cell--on">■</span> □
+□ <span class="gol-cell--on">■</span> □  →  <span class="gol-result--on">■</span>
+□ □ □</pre><span class="gol-rule-label">sopravvive<br>2–3 vicini</span></div>
+    <div class="gol-rule"><pre class="gol-grid"><span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span>
+<span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span> <span class="gol-cell--on">■</span>  →  <span class="gol-result--off">□</span>
+□ □ <span class="gol-cell--on">■</span></pre><span class="gol-rule-label">folla<br>&gt;&nbsp;3 vicini</span></div>
+    <div class="gol-rule"><pre class="gol-grid">· <span class="gol-cell--on">■</span> ·
+<span class="gol-cell--on">■</span> □ <span class="gol-cell--on">■</span>  →  <span class="gol-result--on">■</span>
+· □ ·</pre><span class="gol-rule-label">nascita<br>=&nbsp;3 vicini</span></div>
+  </div>
+  <p class="gol-desc-section-title">// tecnologie</p>
+  <div class="gol-tech-row"><span class="tech-tag">JS</span><span class="tech-tag">Canvas 2D</span><span class="tech-tag">requestAnimationFrame</span></div>
+  <p class="gol-desc-section-title">// interfaccia</p>
+  <table class="gol-iface-table">
+    <tr><td class="gol-iface-key">puntatore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">navigazione, nessun disegno</td></tr>
+    <tr><td class="gol-iface-key">disegna</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click / drag aggiunge cellule</td></tr>
+    <tr><td class="gol-iface-key">glider</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click piazza un glider casuale</td></tr>
+    <tr><td class="gol-iface-key">controller</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">collega gamepad / tastiera</td></tr>
+  </table>
+  <p class="gol-iface-hint">play/pause · clear · reseed · velocità</p>
+</div>`,
     tech:   ["JS"],
     status: "LIVE",
     link:   "#",
@@ -688,7 +715,7 @@ async function renderProjItems() {
     const expandedHtml = p.dettagli ? `
       <div class="proj-card-expanded">
         <div class="proj-card-expanded-inner">
-          <p class="proj-card-expanded-text">${p.dettagli}</p>
+          <div class="proj-card-expanded-text">${p.dettagli}</div>
         </div>
       </div>` : ``;
     const golInfoCardHtml = p.isGol ? `<div class="gol-info-card" aria-hidden="true"><button type="button" class="gol-info-close" aria-label="Chiudi">×</button><p class="gol-info-title"></p><p class="gol-info-desc"></p></div>` : ``;
