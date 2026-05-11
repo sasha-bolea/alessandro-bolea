@@ -921,7 +921,7 @@ body.gol-focus-mode > #easter-egg {
     margin-right: 1.4rem;
   }
   .code-block {
-    padding-left: 1cm;
+    padding-left: 0.6rem;
   }
 
   /* Mobile: ripristina layout originale dei controlli GoL —
