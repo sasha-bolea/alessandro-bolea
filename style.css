@@ -902,7 +902,19 @@ h1 {
    GOL FOCUS MODE — card morpha in controller fixed-bottom
    ============================================================ */
 /* Bottone focus separato visivamente dai mode-selector (bordo dashed) */
-.gol-focus-btn { margin-left: 0.4em; border-style: dashed; }
+.gol-focus-btn {
+  margin-left: 0.4em;
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+.gol-focus-btn:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
 
 /* Handle di collasso della focus card */
 .gol-focus-handle {
