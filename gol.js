@@ -613,6 +613,7 @@
     // a fine typing in placeFinalBraceAndLine, l'interval da 800 ms non
     // scatta perché lo scrollHeight è "auto-bloccato" sull'altezza del canvas).
     resize: () => resize(),
+    tick: () => { step(); draw(true); },
     // Cambia colore celle con fade.
     // target: hex string (es. "#ffffff") oppure null per tornare al colore tema (CSS var --bg-glyph).
     // durMs: durata fade ms (default 600).

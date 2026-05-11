@@ -648,6 +648,8 @@ h1 {
 .gol-ico-play { display: none; }
 .gol-btn.is-paused .gol-ico-pause { display: none; }
 .gol-btn.is-paused .gol-ico-play  { display: block; }
+.gol-step-btn { display: none; }
+.gol-btn.is-paused + .gol-step-btn { display: flex; }
 
 /* Toggle icone focus on/off — quando focus mode attivo (is-active) mostra contrai */
 .gol-ico-focus-off { display: none; }

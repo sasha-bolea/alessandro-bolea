@@ -681,6 +681,12 @@ async function renderProjItems() {
           <svg class="gol-ico gol-ico-pause" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="12"/><line x1="10" y1="4" x2="10" y2="12"/></svg>
           <svg class="gol-ico gol-ico-play" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4 L12 8 L5.5 12 Z"/></svg>
         </button>
+        <button type="button" class="gol-btn gol-step-btn" data-gol-action="step" aria-label="Avanza di una generazione" data-tooltip="Passo singolo">
+          <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 4 L10.5 8 L4.5 12 Z" fill="currentColor" stroke="none"/>
+            <line x1="12" y1="4" x2="12" y2="12"/>
+          </svg>
+        </button>
         <button type="button" class="gol-btn" data-gol-action="clear" aria-label="Pulisci" data-tooltip="Pulisci griglia">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5"/></svg>
         </button>
@@ -1254,6 +1260,9 @@ function bindGolControls(root) {
   });
   clearBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.clear(); });
   reseedBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.reseed(); });
+
+  const stepBtn = root.querySelector('[data-gol-action="step"]');
+  if (stepBtn) stepBtn.addEventListener("click", e => { stop(e); window.__gol && window.__gol.tick(); });
 
   const speedSlider = root.querySelector('[data-gol-action="speed"]');
   if (speedSlider) {
