@@ -504,20 +504,19 @@ async function typeToolsSection() {
   startSection("projects");
 }
 
-const DEVICON = "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/";
 const techIconMap = {
-  "Python":     { path: "python/python-original.svg" },
-  "Java":       { path: "java/java-original.svg" },
-  "JS":         { path: "javascript/javascript-original.svg" },
-  "HTML":       { path: "html5/html5-original.svg" },
-  "CSS":        { path: "css3/css3-original.svg" },
-  "Node.js":    { path: "nodejs/nodejs-original.svg" },
-  "Express":    { path: "express/express-original.svg", invert: true },
-  "Docker":     { path: "docker/docker-original.svg" },
-  "SQL":        { path: "mysql/mysql-original.svg" },
-  "Git":        { path: "git/git-original.svg" },
-  "GitHub":     { path: "github/github-original.svg", invert: true },
-  "VSCode":     { path: "vscode/vscode-original.svg" },
+  "Python":     { path: "assets/icons/python-original.svg" },
+  "Java":       { path: "assets/icons/java-original.svg" },
+  "JS":         { path: "assets/icons/javascript-original.svg" },
+  "HTML":       { path: "assets/icons/html5-original.svg" },
+  "CSS":        { path: "assets/icons/css3-original.svg" },
+  "Node.js":    { path: "assets/icons/nodejs-original.svg" },
+  "Express":    { path: "assets/icons/express-original.svg", invert: true },
+  "Docker":     { path: "assets/icons/docker-original.svg" },
+  "SQL":        { path: "assets/icons/mysql-original.svg" },
+  "Git":        { path: "assets/icons/git-original.svg" },
+  "GitHub":     { path: "assets/icons/github-original.svg", invert: true },
+  "VSCode":     { path: "assets/icons/vscode-original.svg" },
 };
 
 async function renderToolsItems() {
@@ -561,7 +560,7 @@ async function renderToolsItems() {
       const icon = techIconMap[item];
       if (icon) {
         const img = document.createElement("img");
-        img.src = DEVICON + icon.path;
+        img.src = icon.path;
         img.alt = item;
         if (icon.invert) img.setAttribute("data-invert", "");
         card.appendChild(img);
