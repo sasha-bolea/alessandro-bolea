@@ -76,7 +76,7 @@ const iMieiProgetti = [
     <tr><td class="gol-iface-key">puntatore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">navigazione, nessun disegno</td></tr>
     <tr><td class="gol-iface-key">disegna</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click / drag aggiunge cellule</td></tr>
     <tr><td class="gol-iface-key">glider</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click piazza un glider casuale</td></tr>
-    <tr><td class="gol-iface-key">controller</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">collega gamepad / tastiera</td></tr>
+    <tr><td class="gol-iface-key">modalità focus</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">collega gamepad / tastiera</td></tr>
   </table>
   <p class="gol-iface-hint">play/pause · clear · reseed · velocità</p>
 </div>`,
@@ -736,7 +736,7 @@ async function renderProjItems() {
               <button type="button" class="gol-pattern-option" data-gol-pattern="copperhead">copperhead</button>
             </div>
           </div>
-          <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; controller">
+          <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; focus">
             <svg class="gol-ico gol-ico-focus-on" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="2,6 2,2 6,2"/><polyline points="14,6 14,2 10,2"/>
               <polyline points="2,10 2,14 6,14"/><polyline points="14,10 14,14 10,14"/>
