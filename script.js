@@ -1,3 +1,31 @@
+/*
+
+
+                             :1;
+                             wd8}
+                             MM8L
+                            lpbMOL
+                ,)c)        tCpOcOp}            .1}       .l1}
+                cdhp        qwd>;cmq1          !\MB}      {wBb
+               +waM[       lc00  ,(Uqa}         QaBL      WBBr
+               {pMM;       {c0[    ]CdBa1}       OdB}     8B8
+               CbMh        cCO`.    :jq8BB       <cpM     Q8M . `.
+              ;qhM0       cwMpcw~     .vv>        jcq[`;~~wM8ff(cLwc
+              (baMc   `[cQMMWkp[`            `,![/ZaMbOOUcdMM[[][jv>
+             ~ChabQ [cwppMMkf         `,[))c0cwWW8BB8M(.  cUM;
+            'cObpbk0ppdqCUcr  `;~1cccwCwaMMMkkMWBOvY0O    ]ck/
+         `[1cwhMhMMbpUf ]cbcwdkbpkbbaUvv>,cmw8bv   )Qq    <cqL
+     l[cwbhaMWWWWWMr:    daW8W0vvv      [UOhU>     [Cp     cQM!
+  ;[waMMMMMMMMMMMMMM)    <v(          lccOv>       cwp     !0ah,
+  _qM88MMMaMaMr <aMMML       1L1,    /cQ0>        !whr      j0Mp}
+  :vvvvv>]whab   jkM8ML     ~ckMMc ;/cOr          \WM[       jaM8`
+       )ZaaMM>   :jaM8b      <vabMMcwp[          ;CMM         <v>
+      lMB88k>      <vv>         vb8BMr            _[:
+      <BMMv`                     <M8ML
+                                  ;vv;
+
+
+*/
 /* ============================================================
    CONFIGURAZIONE
    ============================================================ */
@@ -13,11 +41,11 @@ const iMieiStrumenti = {
 };
 
 const iMieiProgetti = [
-  {
-    nome:   "Game of Life",
-    desc:   "Sfondo interattivo del sito",
-    dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">Creato dal matematico <span class="gol-hl">John Horton Conway</span> nel <span class="gol-hl">1970</span>, il Game of Life è un automa cellulare che simula l'evoluzione di una popolazione su una griglia. Non è un gioco nel senso tradizionale — non ci sono giocatori né obiettivi — ma una simulazione che si svolge da sola. Ogni cella può essere viva ■ o morta □ e, in base allo stato delle celle circostanti, il suo stato cambierà alla generazione successiva — dimostrando come comportamenti complessi possano emergere da poche semplici regole.</p>
+    {
+        nome: "Game of Life",
+        desc: "Sfondo interattivo del sito",
+        dettagli: `<div class="gol-desc">
+  <p class="gol-desc-intro">Creato dal matematico <span class="gol-hl">John Horton Conway</span> nel <span class="gol-hl">1970</span>, il Game of Life è un automa cellulare che simula l'evoluzione di una popolazione su una griglia. Non è un gioco nel senso tradizionale — non ci sono giocatori né obiettivi — ma una simulazione che si svolge da sola. Ogni cella può essere viva ■ o morta □ e, in base allo stato delle celle circostanti, il suo stato cambierà alla generazione successiva — dimostrando come comportamenti <span class="gol-hl">complessi</span> possano <span class="gol-hl">emergere</span> da poche semplici regole:</p>
   <p class="gol-desc-section-title">// regole</p>
   <div class="gol-rules-row">
     <div class="gol-rule">
@@ -81,11 +109,11 @@ const iMieiProgetti = [
   </table>
   <p class="gol-iface-hint">play/pause · clear · reseed · velocità</p>
 </div>`,
-    tech:   ["JS"],
-    status: "LIVE",
-    link:   "#",
-    isGol:  true
-  }
+        tech: ["JS"],
+        status: "LIVE",
+        link: "#",
+        isGol: true,
+    },
 ];
 
 const contatti = {
