@@ -1,0 +1,232 @@
+/* style.css — Bigfoot Chopstick. Layout verticale 480x854 scalato a schermo. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  user-select: none;
+}
+
+/* Lo stage mantiene il rapporto 480:854 e si centra nello schermo. */
+#stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 480px;
+  height: 854px;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: #000;
+}
+
+/* --- Schermate ----------------------------------------------------------- */
+.screen {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  display: none;
+}
+.screen.attiva { display: block; }
+
+/* Home: sfondo tileable che scorre all'infinito (lato dx si salda al sx). */
+#screen-home {
+  background-repeat: repeat-x;
+  background-size: auto 100%;   /* tile alto quanto lo stage, largo 480 */
+  background-position: 0 center;
+  animation: scrollHome 24s linear infinite;
+}
+@keyframes scrollHome {
+  from { background-position-x: 0; }
+  to   { background-position-x: -480px; } /* larghezza di un tile = loop perfetto */
+}
+@media (prefers-reduced-motion: reduce) {
+  #screen-home { animation: none; }
+}
+
+/* --- Bottoni gialli generici -------------------------------------------- */
+.btn-giallo {
+  background: #f6c026;
+  color: #5a3a00;
+  border: 4px solid #c8961a;
+  border-radius: 14px;
+  font-weight: bold;
+  font-size: 26px;
+  padding: 12px 26px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #9c7414;
+  transition: transform .08s;
+}
+.btn-giallo:active { transform: translateY(3px); box-shadow: 0 1px 0 #9c7414; }
+
+/* --- Home ---------------------------------------------------------------- */
+/* Tronco statico in primo piano sopra lo sfondo scorrevole. */
+.home-tronco {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+.home-bigfoot {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translate(10%, -22%) rotate(-48deg); /* inclinato sx, un po' giù e a destra */
+  transform-origin: bottom right;               /* perno angolo basso-destra */
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;                                   /* dietro al tronco */
+  animation: dondolaBigfoot 3.6s ease-in-out infinite;
+}
+
+/* Dondolio lento attorno all'angolo basso-destra. */
+@keyframes dondolaBigfoot {
+  0%, 100% { transform: translate(10%, -22%) rotate(-50deg); }
+  50%      { transform: translate(10%, -22%) rotate(-45deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-bigfoot { animation: none; }
+}
+.home-buttons {
+  position: absolute;
+  top: 60px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 18px;
+  z-index: 2;
+}
+
+/* --- Crediti ------------------------------------------------------------- */
+.credits-box {
+  position: absolute;
+  inset: 80px 24px 120px 24px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 2px 2px 4px #000;
+  display: flex; flex-direction: column; justify-content: center; gap: 14px;
+}
+.credits-box h1 { font-size: 46px; color: #f6c026; }
+.credits-box p { font-size: 15px; line-height: 1.4; }
+.btn-back { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); }
+
+/* --- Gioco: sfondo con micro-movimento "camera a mano" ------------------- */
+.cam-gioco {
+  position: absolute;
+  inset: -7%;                 /* più grande dello stage: i bordi non si scoprono */
+  width: 114%; height: 114%;
+  background: url('../assets/sfondo_gioco.png') center center / cover no-repeat;
+  z-index: 0;
+  will-change: transform;
+  animation: camMano 18s ease-in-out infinite;
+}
+
+/* Deriva lenta e organica: piccole traslazioni + leggera rotazione. */
+@keyframes camMano {
+  0%   { transform: translate(0%, 0%) rotate(0deg) scale(1.02); }
+  20%  { transform: translate(1.1%, -0.9%) rotate(0.35deg) scale(1.03); }
+  40%  { transform: translate(-0.9%, 0.7%) rotate(-0.3deg) scale(1.02); }
+  60%  { transform: translate(0.7%, 1%) rotate(0.25deg) scale(1.035); }
+  80%  { transform: translate(-1%, -0.6%) rotate(-0.35deg) scale(1.02); }
+  100% { transform: translate(0%, 0%) rotate(0deg) scale(1.02); }
+}
+
+/* Rispetta chi preferisce meno animazioni. */
+@media (prefers-reduced-motion: reduce) {
+  .cam-gioco { animation: none; }
+}
+
+/* --- Gioco: mani --------------------------------------------------------- */
+.mano {
+  position: absolute;
+  height: 60%;            /* più grandi; i bracci sforano oltre il bordo */
+  transition: transform .55s ease, opacity .4s ease;
+  cursor: pointer;
+  z-index: 2;
+}
+.mano-bot { top: -16%; }      /* Bigfoot più in alto */
+.mano-player { bottom: -16%; } /* mani umane più in basso */
+
+/* Le mani di destra sono speculari per simmetria. */
+.mano-sx { left: 6%; }
+.mano-dx { right: 6%; transform: scaleX(-1); }
+
+/* Evidenziazione della mano selezionata come attaccante. */
+.mano.selezionata { filter: drop-shadow(0 0 12px #fff) brightness(1.15); }
+
+/* Mano morta: esce dallo schermo e sparisce. */
+.mano-bot.morta { transform: translateY(-115%); opacity: 0; pointer-events: none; }
+.mano-player.morta { transform: translateY(115%); opacity: 0; pointer-events: none; }
+.mano-dx.morta { transform: translateY(-115%) scaleX(-1); opacity: 0; pointer-events: none; }
+.mano-player.mano-dx.morta { transform: translateY(115%) scaleX(-1); opacity: 0; pointer-events: none; }
+
+/* Animazione "colpo": la trasformazione è calcolata in JS (trasformazioneAttacco)
+   così la mano si protende verso il bersaglio, anche in diagonale. */
+
+/* --- Bottone pausa ------------------------------------------------------- */
+.btn-pausa {
+  position: absolute;
+  top: 16px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  width: 56px; height: 56px;
+  background: #9b4dff;
+  color: #fff; font-weight: bold; font-size: 22px;
+  border: 4px solid #7a2fe0; border-radius: 14px;
+  cursor: pointer;
+}
+
+/* --- Banner turno -------------------------------------------------------- */
+.banner {
+  position: absolute;
+  top: 44%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  color: #fff;
+  font-size: 30px; font-weight: bold;
+  text-shadow: 3px 3px 6px #000;
+  text-align: center;
+  opacity: 0;
+  transition: opacity .5s ease;
+  pointer-events: none;
+  width: 90%;
+}
+.banner.visibile { opacity: 1; }
+
+/* --- Split --------------------------------------------------------------- */
+.btn-split {
+  position: absolute;
+  left: 16px; bottom: 38%;
+  z-index: 5;
+  display: none;
+  background: #f6c026; color: #5a3a00;
+  border: 4px solid #c8961a; border-radius: 12px;
+  font-weight: bold; font-size: 20px; padding: 8px 16px;
+  cursor: pointer;
+}
+.btn-split.visibile { display: block; }
+.split-opzioni {
+  position: absolute;
+  left: 16px; bottom: 30%;
+  z-index: 7;
+  display: none;
+  flex-direction: column; gap: 8px;
+}
+.split-opzioni.visibile { display: flex; }
+.split-opzioni button {
+  background: #fff; border: 3px solid #c8961a; border-radius: 10px;
+  font-weight: bold; font-size: 18px; padding: 6px 12px; cursor: pointer;
+}
+
+/* --- Overlay fine -------------------------------------------------------- */
+.overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(0,0,0,.72);
+  display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: 30px;
+}
+.overlay.visibile { display: flex; }
+.testo-fine { color: #f6c026; font-size: 48px; font-weight: bold; text-shadow: 3px 3px 6px #000; }
+.overlay-buttons { display: flex; gap: 24px; }

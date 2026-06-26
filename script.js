@@ -114,6 +114,28 @@ const iMieiProgetti = [
         link: "#",
         isGol: true,
     },
+    {
+        nome: "Royale Arena",
+        desc: "Piattaforma per tornei e statistiche tramite Clash Royale API",
+        dettagli: `<div class="gol-desc">
+  <p class="gol-desc-intro">PWA per clan di <span class="gol-hl">Clash Royale</span> progettata per essere usata nel modo più semplice possibile — nessun account, nessuna registrazione. Un codice condiviso è l'unico gate d'accesso. Per avviare un torneo basta <span class="gol-hl">selezionare i giocatori e premere start</span>: l'app recupera automaticamente le battaglie recenti tramite l'<span class="gol-hl">API ufficiale</span>, filtra solo quelle valide per il torneo in corso e aggiorna il bracket senza nessun intervento manuale.</p>
+  <p class="gol-desc-section-title">// funzionalità</p>
+  <table class="gol-iface-table">
+    <tr><td class="gol-iface-key">clan</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">creazione via codice condiviso, nessuna registrazione</td></tr>
+    <tr><td class="gol-iface-key">tornei</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">bracket automatico, partite collegate alle battaglie reali</td></tr>
+    <tr><td class="gol-iface-key">classifiche</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">statistiche per giocatore aggiornate via polling</td></tr>
+    <tr><td class="gol-iface-key">manutenzione</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">pg_cron invalida tornei inattivi ogni 30 min, pulisce clan vuoti ogni notte</td></tr>
+  </table>
+  <p class="gol-desc-section-title">// sicurezza</p>
+  <p class="gol-iface-hint">modello flat — niente auth, niente token. codice clan = unico gate. isolamento dati garantito, attrito utente zero.</p>
+  <p class="gol-desc-section-title">// tecnologie</p>
+  <div class="gol-tech-row"><span class="tech-tag">Nuxt 4</span><span class="tech-tag">Vue 3</span><span class="tech-tag">Supabase</span><span class="tech-tag">PostgreSQL</span><span class="tech-tag">pg_cron</span><span class="tech-tag">PWA</span></div>
+</div>`,
+        tech: ["Nuxt 4", "Vue 3", "Supabase", "PWA"],
+        status: "LIVE",
+        link: "https://royalarena.it",
+        github: "https://github.com/sasha-bolea/clash-royale-api",
+    },
 ];
 
 const contatti = {
@@ -695,9 +717,10 @@ async function renderProjItems() {
     const card = document.createElement("div");
     card.className = "project-card";
     const techTags = p.tech.map(t => `<span class="tech-tag">${t}</span>`).join("");
-    const linkHtml = p.link && p.link !== "#"
-      ? `<a href="${p.link}" target="_blank" class="proj-open-link">→ open</a>`
-      : ``;
+    const linkHtml = [
+      p.link && p.link !== "#" ? `<a href="${p.link}" target="_blank" class="proj-open-link">→ open</a>` : ``,
+      p.github ? `<a href="${p.github}" target="_blank" class="proj-open-link">→ github</a>` : ``
+    ].join("");
     const golHtml = p.isGol ? `
       <button type="button" class="gol-focus-handle" aria-label="Riduci controlli">
         <svg class="gol-ico gol-ico-handle-down" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,6 8,10 12,6"/></svg>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Bigfoot Chopstick</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Contenitore in formato verticale 480x854, scalato per riempire lo schermo -->
+  <div id="stage">
+
+    <!-- ===================== HOME ===================== -->
+    <section id="screen-home" class="screen attiva" style="background-image:url('assets/sfondo_home.png')">
+      <img class="home-tronco" src="assets/tronco.png" alt="">
+      <img class="home-bigfoot" src="assets/bigfoot.png" alt="Bigfoot">
+      <div class="home-buttons">
+        <button id="btn-play" class="btn-giallo">GIOCA</button>
+        <button id="btn-credits" class="btn-giallo">CREDITI</button>
+      </div>
+    </section>
+
+    <!-- ===================== CREDITI ===================== -->
+    <section id="screen-credits" class="screen" style="background-image:url('assets/sfondo_home.png')">
+      <div class="credits-box">
+        <h1>CREDITS</h1>
+        <p><strong>DEVELOPER</strong><br>SASHA</p>
+        <p><strong>GRAPHICS FROM</strong><br>VYV</p>
+        <p>AND PROLICH FROM FIVER</p>
+      </div>
+      <button id="btn-credits-back" class="btn-giallo btn-back">←</button>
+    </section>
+
+    <!-- ===================== GIOCO ===================== -->
+    <section id="screen-game" class="screen">
+      <!-- Layer sfondo con leggero movimento "camera a mano" -->
+      <div class="cam-gioco"></div>
+      <button id="btn-pause" class="btn-pausa">II</button>
+
+      <!-- Mani del Bigfoot (bot) in alto -->
+      <img id="bot-sx" class="mano mano-bot mano-sx" alt="">
+      <img id="bot-dx" class="mano mano-bot mano-dx" alt="">
+
+      <!-- Mani umane (player) in basso -->
+      <img id="player-sx" class="mano mano-player mano-sx" alt="">
+      <img id="player-dx" class="mano mano-player mano-dx" alt="">
+
+      <!-- Banner messaggio di turno -->
+      <div id="banner-turno" class="banner"></div>
+
+      <!-- Bottone split -->
+      <button id="btn-split" class="btn-split">SPLIT</button>
+      <div id="split-opzioni" class="split-opzioni"></div>
+
+      <!-- Overlay di fine partita -->
+      <div id="overlay-fine" class="overlay">
+        <div id="testo-fine" class="testo-fine"></div>
+        <div class="overlay-buttons">
+          <button id="btn-restart" class="btn-giallo">↻</button>
+          <button id="btn-home" class="btn-giallo">🏠</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/rules.js"></script>
+  <script src="js/bot.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
