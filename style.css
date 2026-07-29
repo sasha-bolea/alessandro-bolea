@@ -28,7 +28,7 @@ html {
 
 body {
   font-family: "Hack", monospace;
-  font-size: clamp(18px, 2.2vh, 2rem);
+  font-size: clamp(18px, 2.2svh, 2rem);
   min-height: 100vh;
   margin: 0;
   background-color: var(--bg);
@@ -172,17 +172,13 @@ h1 {
   padding-bottom: 6vh;
   box-sizing: border-box;
 }
-#tools-section, #projects-section, #contact-section { min-height: 80vh; }
-#tools-section.section-done, #projects-section.section-done, #contact-section.section-done { min-height: 0; }
-/* Ultima sezione: niente padding-bottom a fine typing.
-   Il padding faceva straripare lo scrollHeight oltre la graffa,
-   creando spazio "fantasma" dopo lo scroll-clamp. */
-#contact-section.section-done { padding-bottom: 0; }
 .code-row {
   display: flex;
   align-items: flex-start;
   white-space: pre-wrap;
-  font-size: clamp(18px, 2.2vh, 2rem);
+  font-size: clamp(18px, 2.2svh, 2rem);
+  /* Contenitore per .fold-handle, in overlay nella gutter */
+  position: relative;
 }
 .code-row .line-numbers {
   margin-right: 2cm;
@@ -224,7 +220,7 @@ h1 {
 }
 .reveal-text {
   color: var(--text);
-  font-size: clamp(18px, 2.2vh, 2rem);
+  font-size: clamp(18px, 2.2svh, 2rem);
   white-space: pre-wrap;
   display: flex;
   align-items: flex-start;
@@ -244,6 +240,16 @@ h1 {
   min-height: 1em;
 }
 
+/* ── Typing: costruito subito, rivelato dopo ── */
+/* Il contenuto finale è nel DOM dal primo frame ma invisibile: a-capo, altezza
+   e posizione sono definitivi, così la pagina non cambia mai lunghezza mentre
+   si scrive. visibility (non display) perché lo spazio deve restare occupato. */
+.ty-rest, .ty-pending { visibility: hidden; }
+/* Riga vuota di coda sezione: il suo unico contenuto è lo span dei numeri, che
+   resta vuoto finché la scrittura non ci arriva. Senza riservarne l'altezza il
+   documento crescerebbe di una riga per sezione a fine scrittura. */
+.line-numbers.ty-reserve { min-height: 1lh; }
+
 /* ── Line numbers ── */
 .line-numbers {
   color: var(--text-dim);
@@ -258,6 +264,61 @@ h1 {
   flex-shrink: 0;
   margin-right: 1cm;
 }
+
+/* ── Code folding ── */
+/* Tutte le maniglie stanno nella stessa colonna, qualunque sia il livello di
+   annidamento della regione: la striscia fra la colonna dei numeri (--ln-w,
+   scritta da syncLnWidth) e la PRIMA barra di indentazione, #indent-line.
+   Quella barra è a 1cm dai numeri perché è posizionata da JS a
+   nameLn.offsetWidth + margin-right di #name-line-numbers. */
+.fold-handle {
+  position: absolute;
+  top: 0;
+  left: var(--ln-w, 0px);
+  width: 1cm;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  /* La maniglia copre esattamente la colonna numeri → #indent-line, quindi
+     centrare qui centra la freccetta in quella colonna. */
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  transition: color 0.2s;
+  z-index: 2;
+  /* I <button> non ereditano il font: senza questo prendono il 13.3px Arial
+     dello user agent e 1ch della freccetta crolla a ~7px. */
+  font: inherit;
+}
+.fold-handle--global {
+  /* h1 è 7.5vw: senza questo la freccetta erediterebbe quel corpo invece
+     di quello dei numeri di riga del corpo */
+  font-size: clamp(18px, 2.2svh, 2rem);
+}
+.fold-handle:hover { color: var(--text); }
+.fold-chevron {
+  /* Una cella di carattere della colonna dei numeri: 1ch è la larghezza di una
+     cifra nel monospace, 1em la sua altezza. Queste misure valgono per lo stato
+     ">" (piegato); ruotando di 90° per lo stato espanso le due si scambiano,
+     quindi le proporzioni della freccetta restano identiche. */
+  width: calc(1ch - 2px);
+  height: calc(1em - 2px);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.2s ease;
+}
+/* Espanso = punta in basso, piegato = punta a destra, come in VS Code */
+.fold-handle:not(.is-folded-on) .fold-chevron { transform: rotate(90deg); }
+/* gutter-hover: il puntatore è nella fascia a sinistra di #indent-line, tutte
+   le freccette compaiono insieme (lo stato lo accende bindGutterHover). */
+body.gutter-hover .fold-chevron,
+.fold-handle:hover .fold-chevron,
+.fold-handle:focus-visible .fold-chevron,
+.fold-handle.is-folded-on .fold-chevron { opacity: 1; }
+.is-folded { display: none; }
 
 /* ── Tech tags ── */
 .tech-tag {
@@ -358,8 +419,18 @@ h1 {
   flex-direction: row;
   align-items: center;
   gap: 2em;
-  min-height: 4.5em;
+  /* Altezza fissa: la card chiusa non cresce mai. Se il contenuto non ci sta
+     fitCardRow() nasconde tech tag e descrizione; overflow: hidden è la rete
+     di sicurezza per i casi che nemmeno quello riesce a far rientrare. */
+  --row-h: 4.5em;
+  min-height: var(--row-h);
+  max-height: var(--row-h);
+  overflow: hidden;
 }
+/* Elementi nascosti da fitCardRow: servono regole esplicite perché .tech-tag
+   dichiara display: inline-block e vince sul [hidden] dello user agent. */
+.tech-tag[hidden],
+.proj-desc[hidden] { display: none; }
 .proj-card-expanded {
   max-height: 0;
   opacity: 0;
@@ -410,6 +481,19 @@ h1 {
   line-height: 1.55;
 }
 .project-card.is-expanded .proj-card-expanded-text { color: var(--text); opacity: 0.85; }
+/* Riga link (open / github) dentro la card aperta */
+.proj-card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2em;
+  margin-top: 0.9em;
+}
+.proj-card-links .proj-open-link {
+  display: inline-block;
+  width: auto;
+  text-align: left;
+  margin-top: 0;
+}
 .project-card:hover {
   border-color: var(--text-dim);
   background: rgba(255,255,255,0.03);
@@ -463,6 +547,10 @@ h1 {
   margin: 0;
   text-align: center;
   flex: 1;
+  /* Può andare a capo; min-width: 0 le consente di restringersi sotto la
+     larghezza del testo invece di forzare la riga. Il limite alle righe lo
+     impone fitCardRow(), che misura l'altezza della card. */
+  min-width: 0;
 }
 .project-card:hover .proj-desc { color: var(--text); opacity: 0.7; }
 
@@ -470,12 +558,14 @@ h1 {
   padding: 0;
   border: none;
   display: flex;
-  flex-wrap: wrap;
+  /* nowrap + min-width 0: i tag restano su una riga (niente crescita in
+     altezza) e lo spazio liberato da quelli nascosti va tutto alla desc. */
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.25em;
   flex-shrink: 0;
   justify-content: flex-end;
-  min-width: 5em;
+  min-width: 0;
 }
 .project-card:hover .proj-card-footer { border: none; }
 .proj-open-link {
@@ -508,20 +598,30 @@ h1 {
   .contact-link:hover .contact-val { color: var(--text); }
 }
 .contact-indent { color: transparent; user-select: none; }
-.contact-sep { color: var(--text); padding-right: 1em; }
-.contact-cursor::after {
-  content: "";
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background-color: var(--cursor-color);
-  vertical-align: text-bottom;
-  margin-left: 2px;
-  animation: blink 0.7s step-end infinite;
-}
 
+/* ── Percorso: righe periodo → tappa ── */
+/* Stesso ritmo verticale e stesso hover dei contatti. Le voci con href sono
+   rese come <a>, le altre come <div>: entrambe usano queste regole. */
+.perc-row {
+  display: block;
+  padding: 0.25em 0;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.18s;
+}
+.perc-key { color: var(--text); }
+.perc-val { color: var(--text-dim); transition: color 0.18s; }
+@media (hover: hover) {
+  a.perc-row:hover .perc-key,
+  a.perc-row:hover .perc-val { color: var(--text); }
+}
+.contact-sep { color: var(--text); padding-right: 1em; }
 /* ── Typing cursor ── */
-.typing-cursor::after {
+/* Il testo completo è già nel DOM dentro .ty-rest: un ::after sul contenitore
+   finirebbe in fondo alla riga invece che in coda a quanto è stato scritto,
+   quindi il cursore si aggancia a .ty-done. La classe la mette e la toglie
+   typeInto sull'elemento che sta scrivendo in quel momento. */
+.typing-cursor > .ty-done::after {
   content: "";
   display: inline-block;
   width: 2px;
@@ -985,7 +1085,7 @@ h1 {
   opacity: 1 !important;
   overflow: visible !important;
 }
-.gol-focus-active .proj-card-row { min-height: 0; gap: 0; }
+.gol-focus-active .proj-card-row { min-height: 0; max-height: none; overflow: visible; gap: 0; }
 .gol-focus-active .proj-card-body { justify-content: center; }
 .gol-focus-active .gol-controls {
   display: flex;
@@ -1052,6 +1152,10 @@ body.gol-focus-mode > #easter-egg {
   .code-block {
     padding-left: 0.6rem;
   }
+
+  /* La gutter si stringe: #indent-line passa a 1.4rem dai numeri */
+  .fold-handle { width: 1.4rem; }
+  .fold-handle--global { font-size: 14px; }
 
   /* Slider GoL: thumb più grande e touch-action corretta per il drag su mobile */
   .gol-speed-slider {

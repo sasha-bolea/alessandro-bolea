@@ -33,6 +33,19 @@ const originalSurname = "bolea";
 const originalName    = "Alessandro(){";
 const newName         = "Sasha(){";
 
+// Chiavi = periodi, l'ordine di scrittura è l'ordine di visualizzazione.
+// Il valore può essere una stringa o { display, href } per rendere la riga un link.
+const ilMioPercorso = {
+  "2025 — in corso": {
+    display: 'ITS Digital Academy "Mario Volpato", Web Developer Full Stack',
+    href: "https://itsdigitalacademy.com/corsi/web-developer-full-stack/"
+  },
+  "2026 — in corso": {
+    display: "Stage, ELAN42 digital agency",
+    href: "https://elan42.com/"
+  },
+};
+
 const iMieiStrumenti = {
   linguaggi: ["Python", "Java", "JS", "HTML", "CSS"],
   runtime:   ["Node.js", "Express", "Docker"],
@@ -162,15 +175,36 @@ let currentEditable  = null;
 
 /* ── Section skip/auto-advance state ── */
 const sec = {
-  reveal:   { started:false, done:false, skip:false, el:null, start:() => typeRevealText() },
-  tools:    { started:false, done:false, skip:false, el:null, start:() => typeToolsSection() },
-  projects: { started:false, done:false, skip:false, el:null, start:() => typeProjSection() },
-  contacts: { started:false, done:false, skip:false, el:null, start:() => typeContactSection() },
+  reveal:   { started:false, done:false, skip:false, el:null, start:() => revealBio() },
+  percorso: { started:false, done:false, skip:false, el:null, start:() => revealPercorso() },
+  tools:    { started:false, done:false, skip:false, el:null, start:() => revealTools() },
+  projects: { started:false, done:false, skip:false, el:null, start:() => revealProjects() },
+  contacts: { started:false, done:false, skip:false, el:null, start:() => revealContatti() },
 };
-const secOrder = ["reveal","tools","projects","contacts"];
+const secOrder = ["reveal","percorso","tools","projects","contacts"];
+// id della sezione nel DOM → chiave in sec. Serve al folding durante il typing,
+// quando sec[n].el non è ancora assegnato (lo fa l'handler di load).
+// skip non è più uno stato per sezione ma un predicato dinamico: i ~20 punti
+// che lo leggono restano invariati e diventano per-elemento. Il setter è un
+// no-op voluto — lo script non è strict, senza di esso una vecchia
+// assegnazione sparirebbe in silenzio invece di non fare nulla.
+secOrder.forEach(n => Object.defineProperty(sec[n], "skip", {
+  get: skipNow,
+  set() {},
+}));
+
+const SECTION_KEY_BY_ID = {
+  "percorso-section": "percorso",
+  "tools-section":    "tools",
+  "projects-section": "projects",
+  "contact-section":  "contacts",
+};
 function startSection(name) {
   const s = sec[name];
   if (!s || s.started) return;
+  // Se parte la sezione successiva, la precedente ha finito: è il momento di
+  // darle la sua freccetta di fold, senza aspettare la fine della pagina.
+  ensureFoldHandles();
   s.started = true;
   if (name === "reveal") hasTyped = true;
   s.start();
@@ -185,11 +219,99 @@ function nextSection(name) {
    ============================================================ */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rnd   = (a, b) => Math.random() * (b - a) + a;
-const fast  = (s, ms) => s.skip ? Promise.resolve() : sleep(ms);
+
+/* ── Skip per elemento ──
+   Ciò che è già uscito dal viewport verso l'alto viene generato senza
+   animazione; l'animazione riprende dal primo elemento ancora visibile, anche
+   solo in parte. Il confronto è fra due numeri e non legge il layout: dopo lo
+   split build/reveal la pagina è statica, quindi la posizione di documento di
+   un elemento si misura una volta sola, quando diventa quello in scrittura. */
+let _cursorEl = null;
+let _cursorBottom = Infinity;   // fondo dell'elemento in scrittura, coord. documento
+let _scrollY = 0;
+
+/* Dichiara qual è l'elemento che si sta scrivendo. el: elemento o null. */
+function setCursorEl(el) {
+  _cursorEl = el || null;
+  _cursorBottom = el ? el.getBoundingClientRect().bottom + window.scrollY : Infinity;
+}
+/* Rimisura il cursore corrente: serve dopo fold, resize e pin, gli unici casi
+   in cui il layout si sposta sotto i piedi della scrittura. */
+function refreshCursorPos() { if (_cursorEl) setCursorEl(_cursorEl); }
+function skipNow() { return _cursorBottom < _scrollY; }
+
+const fast = (s, ms) => skipNow() ? Promise.resolve() : sleep(ms);
+
+
+/* ── Typing: build (sincrono) + reveal (animato) ──
+   Il testo finale entra nel DOM subito, dentro uno .ty-rest invisibile: il
+   layout è quello definitivo dal primo frame. La rivelazione sposta caratteri
+   da .ty-rest a .ty-done senza mai cambiare l'ingombro. */
+
+/* Prepara el con il testo già impaginato ma invisibile.
+   el: contenitore. text: testo finale. Nessun valore di ritorno. */
+function prepType(el, text) {
+  el.innerHTML = `<span class="ty-done"></span><span class="ty-rest"></span>`;
+  el.lastChild.textContent = text;
+  el.dataset.tyText = text;
+}
+
+/* Scopre progressivamente il testo preparato da prepType.
+   el: contenitore preparato. s: voce di sec, per lo skip.
+   onStep: callback opzionale eseguita a ogni carattere. Ritorna una Promise. */
+async function typeInto(el, s, opts = {}) {
+  const { onStep, min = 5, max = 25 } = opts;
+  const text = el.dataset.tyText || "";
+  const done = el.firstChild, rest = el.lastChild;
+  // Il cursore vive sull'elemento che si sta scrivendo: tenerlo altrove (per
+  // esempio sul valore mentre si scrive la chiave) lo lascerebbe fermo, perché
+  // ogni elemento riserva già lo spazio del suo testo completo.
+  el.classList.add("typing-cursor");
+  for (let i = 1; i <= text.length; i++) {
+    if (s.skip) break;
+    done.textContent = text.slice(0, i);
+    rest.textContent = text.slice(i);
+    if (onStep) onStep();
+    await fast(s, rnd(min, max));
+  }
+  done.textContent = text;
+  rest.textContent = "";
+  el.classList.remove("typing-cursor");
+  if (onStep) onStep();
+}
+
+/* Numero di righe renderizzate occupate da un elemento già impaginato.
+   Usa getBoundingClientRect perché funziona anche sugli inline che si
+   estendono su più righe, dove offsetHeight non è affidabile.
+   el: elemento da misurare. Ritorna un intero >= 0. */
+function rowsOf(el) {
+  const slh = singleLineHeight(el.parentElement || el) || 1;
+  return Math.round(el.getBoundingClientRect().height / slh);
+}
+
+/* Ultimo elemento scoperto per ciascun body. Serve a setBlockH e ai numeri di
+   riga: col contenuto già tutto costruito il DOM da solo non basta a sapere
+   dove è arrivata la rivelazione, e le card sono annidate in righe e gruppi. */
+const _lastRevealed = new WeakMap();
+function markRevealed(bodyEl, el) { _lastRevealed.set(bodyEl, el); }
+
+/* Righe occupate dal contenuto scoperto finora, dal top del body al fondo
+   dell'ultimo elemento rivelato. bodyEl: contenitore. Ritorna un intero >= 0. */
+function revealedRows(bodyEl) {
+  const el = _lastRevealed.get(bodyEl);
+  if (!el) return 0;
+  const lh = getLineH(bodyEl) || 28;
+  const span = el.getBoundingClientRect().bottom - bodyEl.getBoundingClientRect().top;
+  return Math.max(0, Math.round(span / lh));
+}
 
 function syncLnWidth() {
   const w = nameLn.offsetWidth;
-  ["reveal-line-numbers","tools-title-ln","tools-body-ln","tools-close-ln","tools-empty-ln",
+  // Le maniglie di fold sono in overlay nella gutter: partono dove finisce la
+  // colonna dei numeri, quindi devono conoscerne la larghezza.
+  document.documentElement.style.setProperty("--ln-w", w + "px");
+  ["reveal-line-numbers","perc-title-ln","perc-body-ln","perc-close-ln","perc-empty-ln",
+   "tools-title-ln","tools-body-ln","tools-close-ln","tools-empty-ln",
    "proj-title-ln","proj-body-ln","proj-close-ln","proj-empty-ln",
    "contact-title-ln","contact-body-ln","contact-close-ln","contact-empty-ln"]
     .forEach(id => {
@@ -198,30 +320,64 @@ function syncLnWidth() {
     });
 }
 
+/* Altezza di una singola riga renderizzata dentro ref, misurata inserendo uno
+   span temporaneo. La misura forza un reflow sincrono e recomputeLineNumbers()
+   la richiede a ogni carattere digitato e a ogni frame durante i pump, quindi
+   il risultato è in cache per elemento. Dipende solo dal font-size, perciò la
+   cache va invalidata solo su resize e a font caricato (clearLineHCache()).
+   ref: elemento contenitore. Ritorna l'altezza in px. */
+let _lineHCache = new WeakMap();
 function singleLineHeight(ref) {
+  const el = ref || document.body;
+  const cached = _lineHCache.get(el);
+  if (cached) return cached;
   const t = document.createElement("span");
   t.textContent = "X"; t.style.visibility = "hidden"; t.style.position = "absolute";
-  ref.appendChild(t);
+  el.appendChild(t);
   const h = t.offsetHeight;
   t.remove();
+  if (h) _lineHCache.set(el, h);
   return h;
 }
+
+/* WeakMap non ha clear(): si riassegna. */
+function clearLineHCache() { _lineHCache = new WeakMap(); }
 
 /* ============================================================
    GEOMETRIA
    ============================================================ */
+/* Misura una volta sola l'altezza che l'h1 raggiungerà, e la pinna.
+   updateRevealPos() leggeva h1.offsetHeight mentre il nome si stava ancora
+   digitando: su viewport strette il nome va a capo e torna, e il margine della
+   reveal section oscillava a ogni carattere, cambiando l'altezza del documento.
+   Si prende il più alto fra i due testi che l'animazione attraversa, non solo
+   quello finale: "Alessandro(){" è più lungo di "Sasha(){" e va a capo prima.
+   Nessun parametro, nessun valore di ritorno. */
+let _h1ReservedH = 0;
+function measureH1Height() {
+  const h1 = document.querySelector("h1");
+  const prevSurname = surnameEl.textContent;
+  const prevName    = nameEl.textContent;
+  h1.style.minHeight = "";
+  let max = 0;
+  for (const testo of [originalName, newName]) {
+    surnameEl.textContent = originalSurname;
+    nameEl.textContent    = testo;
+    max = Math.max(max, h1.offsetHeight);
+  }
+  surnameEl.textContent = prevSurname;
+  nameEl.textContent    = prevName;
+  _h1ReservedH = max;
+  h1.style.minHeight = max + "px";
+}
+
 function updateRevealPos() {
-  const h1       = document.querySelector("h1");
   const slh      = singleLineHeight(document.getElementById("full-name"));
   const h1Top    = window.innerHeight * 0.2;
-  const h1Bottom = h1Top + h1.offsetHeight;
+  const h1Bottom = h1Top + (_h1ReservedH || document.querySelector("h1").offsetHeight);
   revealSection.style.marginTop = h1Bottom > window.innerHeight
     ? (h1Bottom + slh) + "px"
     : "100vh";
-}
-
-function updateIndentLine() {
-  positionIndentLine();
 }
 
 /* ============================================================
@@ -244,34 +400,46 @@ function lnRange(start, count) {
 // fino alla riga di chiusura della sezione (sopra la "}")
 // Mappa bodyId → closeId
 const BLOCK_CLOSE_MAP = {
+  "percorso-body": "perc-close-text",
   "tools-body":    "tools-close-text",
   "projects-list": "proj-close-text",
   "contact-body":  "contact-close-text",
 };
 function setBlockH(bodyEl) {
   if (!bodyEl) return;
-  const closeId = BLOCK_CLOSE_MAP[bodyEl.id];
-  const closeEl = closeId ? document.getElementById(closeId) : null;
-  if (!closeEl) {
-    setBlockH(bodyEl);
+  // Blocco piegato: è display:none, i suoi rect valgono 0 e la differenza
+  // misurata sarebbe l'intera distanza dalla riga di chiusura. Barra a zero.
+  if (bodyEl.closest(".is-folded")) {
+    bodyEl.style.setProperty("--block-h", "0px");
     return;
   }
+  const closeId = BLOCK_CLOSE_MAP[bodyEl.id];
+  const closeEl = closeId ? document.getElementById(closeId) : null;
+  // Blocco non mappato: nessuna riga di chiusura da cui misurare, si esce.
+  // Ogni nuova sezione va aggiunta a BLOCK_CLOSE_MAP, altrimenti la sua barra
+  // verticale resta a 0.
+  if (!closeEl) return;
   const bRect = bodyEl.getBoundingClientRect();
-  const cRect = closeEl.getBoundingClientRect();
-  const h = Math.max(0, cRect.top - bRect.top);
+  // Durante la rivelazione il contenuto esiste già tutto ma è invisibile: la
+  // barra deve fermarsi all'ultimo elemento scoperto, non correre fino in fondo.
+  const last = bodyEl.querySelector(".ty-pending") ? _lastRevealed.get(bodyEl) : null;
+  const h = bodyEl.querySelector(".ty-pending")
+    ? (last ? Math.max(0, last.getBoundingClientRect().bottom - bRect.top) : 0)
+    : Math.max(0, closeEl.getBoundingClientRect().top - bRect.top);
   bodyEl.style.setProperty("--block-h", h + "px");
 }
 
-// Misura altezza di una singola riga renderizzata dentro refEl
+/* Rimisura la barra verticale di TUTTE le sezioni mappate. Da usare dopo ogni
+   cambio di altezza che non è confinato a un solo blocco (resize, fold).
+   Nessun parametro, nessun valore di ritorno. */
+function refreshAllBlockH() {
+  Object.keys(BLOCK_CLOSE_MAP).forEach(id => setBlockH(document.getElementById(id)));
+}
+
+// Stessa misura di singleLineHeight, con fallback per i chiamanti che dividono
+// per il risultato e non devono mai ricevere 0.
 function getLineH(refEl) {
-  const tmp = document.createElement("span");
-  tmp.textContent = "X";
-  tmp.style.visibility = "hidden";
-  tmp.style.position = "absolute";
-  (refEl || document.body).appendChild(tmp);
-  const h = tmp.offsetHeight || 20;
-  tmp.remove();
-  return h;
+  return singleLineHeight(refEl) || 20;
 }
 
 // Calcola quante righe rappresenta uno span .line-numbers
@@ -315,11 +483,21 @@ function lineRows(span) {
   }
 }
 
-// Riassegna numeri sequenziali a tutti gli .line-numbers in ordine DOM
+// Riassegna numeri sequenziali a tutti gli .line-numbers in ordine DOM.
+// Le righe dentro una regione piegata non spariscono dalla numerazione:
+// consumano i loro numeri senza stamparli, così piegando le righe 4-8 dopo
+// il 3 compare direttamente il 9. Il conteggio usato è dataset.trueRows,
+// l'ultimo misurato mentre la regione era visibile.
 function recomputeLineNumbers() {
   let cur = 1;
   document.querySelectorAll(".line-numbers").forEach(span => {
+    if (span.closest(".is-folded")) {
+      span.textContent = "";
+      cur += parseInt(span.dataset.trueRows || "0", 10);
+      return;
+    }
     const rows = lineRows(span);
+    span.dataset.trueRows = String(rows);
     if (rows > 0) {
       span.textContent = lnRange(cur, rows);
       cur += rows;
@@ -340,127 +518,13 @@ function updateNameLn() {
   }
   recomputeLineNumbers();
   syncLnWidth();
-  updateIndentLine();
 }
 
 // Alias di compatibilità — un solo motore di numerazione
-function updateRevealLn()  { recomputeLineNumbers(); updateIndentLine(); }
+function updateRevealLn()  { recomputeLineNumbers(); }
 function updateToolsLn()   { recomputeLineNumbers(); }
 function updateProjLn()    { recomputeLineNumbers(); }
 function updateContactLn() { recomputeLineNumbers(); }
-
-/* ============================================================
-   INDENT LINE & CLOSING BRACE
-   ============================================================ */
-function placeBraceAtDocBottom() {
-  const h1r = document.querySelector("h1").getBoundingClientRect();
-  const lt  = h1r.top + window.scrollY + lastNameLines * singleLineHeight(document.getElementById("full-name"));
-  const ll  = h1r.left + nameLn.offsetWidth + parseInt(getComputedStyle(nameLn).marginRight);
-
-  closingBrace.style.display     = "block";
-  closingBrace.style.visibility  = "hidden";
-  const realBraceH = closingBrace.offsetHeight || 42;
-  closingBrace.style.visibility  = "";
-
-  const docH     = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-  const braceTop = docH - realBraceH - 24;
-
-  closingBrace.style.left = ll + "px";
-  closingBrace.style.top  = braceTop + "px";
-  indentLine.style.left   = ll + "px";
-  indentLine.style.top    = lt + "px";
-  indentLine.style.height = Math.max(braceTop - lt, 0) + "px";
-  indentLine.style.display = "block";
-  window.indentDone = true;
-}
-
-// Chiamata dal typeRevealText e typeContactSection se non ancora fatto
-function showIndentAndBrace() { placeBraceAtDocBottom(); }
-
-function positionIndentLine() { /* no-op */ }
-
-/* ============================================================
-   GHOST RENDER: pre-calcola altezza finale, piazza subito la }
-   ============================================================ */
-async function ghostRenderAndPlace() {
-  // Nascondi visivamente durante il pre-render
-  const hiddenEls = [...document.querySelectorAll(".reveal-section, .code-section")];
-  hiddenEls.forEach(el => el.style.visibility = "hidden");
-  indentLine.style.visibility   = "hidden";
-  closingBrace.style.visibility = "hidden";
-
-  // Forza skip → render istantaneo
-  const sNames = ["reveal","tools","projects","contacts"];
-  sNames.forEach(n => { sec[n].skip = true; sec[n].started = true; });
-  hasTyped = true;
-
-  // Esegui tutte le sezioni in sequenza (skip=true = istantaneo)
-  await typeRevealText();
-  await typeToolsSection();
-  await typeProjSection();
-  await typeContactSection();
-
-  await sleep(80); // attendi flush DOM
-
-  // Forza ricalcolo layout prima di misurare
-  updateRevealPos();
-  updateToolsLn();
-  await sleep(50);
-
-  // Calcola altezza finale e piazza brace
-  document.body.style.minHeight = ""; // reset temporaneo
-  const finalDocH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) + Math.round(window.innerHeight * 0.35);
-
-  // Mantieni l'altezza del documento anche dopo aver svuotato le sezioni
-  document.body.style.minHeight = finalDocH + "px";
-
-  const h1r = document.querySelector("h1").getBoundingClientRect();
-  const lt  = h1r.top + window.scrollY + lastNameLines * singleLineHeight(document.getElementById("full-name"));
-  const ll  = h1r.left + nameLn.offsetWidth + parseInt(getComputedStyle(nameLn).marginRight);
-
-  closingBrace.style.display    = "block";
-  closingBrace.style.visibility = "hidden";
-  const realBraceH = closingBrace.offsetHeight || 42;
-
-  const braceTop = finalDocH - realBraceH - 24;
-  closingBrace.style.left = ll + "px";
-  closingBrace.style.top  = braceTop + "px";
-  indentLine.style.left   = ll + "px";
-  indentLine.style.top    = lt + "px";
-  indentLine.style.height = Math.max(braceTop - lt, 0) + "px";
-  indentLine.style.display = "block";
-  window.indentDone = true;
-
-  // Nascondi la linea — apparirà animata solo al primo scroll
-  indentLine.style.display = "none";
-  indentLine.style.height = "0";
-
-  // Pulisci tutte le sezioni
-  document.getElementById("reveal-content").textContent = "";
-  document.getElementById("reveal-line-numbers").textContent = "";
-  ["tools-title-text","tools-close-text","proj-title-text","proj-close-text",
-   "contact-title-text","contact-close-text"].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = "";
-  });
-  ["tools-body","projects-list","contact-body"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.innerHTML = ""; el.style.minHeight = ""; }
-  });
-  ["tools-title-ln","tools-body-ln","tools-close-ln","tools-empty-ln",
-   "proj-title-ln","proj-body-ln","proj-close-ln","proj-empty-ln",
-   "contact-title-ln","contact-body-ln","contact-close-ln"].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = "";
-  });
-
-  // Reset stato per le animazioni reali
-  sNames.forEach(n => { sec[n].skip = false; sec[n].started = false; sec[n].done = false; });
-  hasTyped = false;
-
-  // Ripristina visibilità
-  hiddenEls.forEach(el => el.style.visibility = "");
-  indentLine.style.visibility   = "";
-  closingBrace.style.visibility = "";
-}
 
 
 /* ============================================================
@@ -497,58 +561,163 @@ async function animateName() {
 /* ============================================================
    ANIMAZIONE REVEAL (bio)
    ============================================================ */
-async function typeRevealText() {
+function buildBio() {
   const text = "/*\nSono uno sviluppatore web full stack di 19 anni. Progetto e sviluppo applicazioni web curando frontend e backend, con attenzione a performance, usabilità e mantenibilità. Affronto i problemi in modo analitico, con particolare attenzione al debug e all'ottimizzazione.\n*/";
+  prepType(revealContent, text + "\n ");
+  document.getElementById("reveal-line-numbers").dataset.fixedRows = "0";
+}
 
-  revealContent.classList.add("typing-cursor");
+async function revealBio() {
+  const s = sec.reveal;
+  const revLn = document.getElementById("reveal-line-numbers");
+  // .ty-done è inline e cresce riga per riga: il suo box è la misura di quanto
+  // è stato scritto finora, e serve sia ai numeri di riga sia alla linea di
+  // indentazione, che altrimenti salterebbero subito all'altezza finale.
+  const done = revealContent.firstChild;
 
-  for (let i = 1; i <= text.length; i++) {
-    if (sec.reveal.skip) { revealContent.textContent = text; updateRevealLn(); updateIndentLineH(revealContent); break; }
-    revealContent.textContent = text.substring(0, i);
-    if (text.substring(0, i).includes("\n")) updateRevealLn();
-    updateIndentLineH(revealContent);
-    await sleep(rnd(2, 10));
+  await typeInto(revealContent, s, {
+    min: 2, max: 10,
+    onStep: () => {
+      revLn.dataset.fixedRows = String(rowsOf(done));
+      recomputeLineNumbers();
+      updateIndentLineH(done);
+    },
+  });
+
+  delete revLn.dataset.fixedRows;
+  recomputeLineNumbers();
+  updateIndentLineH(revealContent);
+  s.done = true;
+  startSection("percorso");
+}
+
+/* ============================================================
+   PERCORSO SECTION
+   ============================================================ */
+/* Digita la sezione percorso: righe "periodo: "tappa"" nello stesso stile
+   della sezione contatti, ma senza link. Nessun valore di ritorno. */
+function buildPercorso() {
+  const titleEl = document.getElementById("perc-title-text");
+  const bodyEl  = document.getElementById("percorso-body");
+  const closeEl = document.getElementById("perc-close-text");
+
+  prepType(titleEl, "const percorso = {");
+  prepType(closeEl, "};");
+
+  Object.entries(ilMioPercorso).forEach(([periodo, raw], ei, arr) => {
+    const isObj = typeof raw === "object" && raw !== null;
+    const valStr = `"${isObj ? raw.display : raw}"${ei < arr.length - 1 ? "," : ""}`;
+    // Con href la riga diventa un link, altrimenti resta un div non cliccabile.
+    const rowEl = document.createElement(isObj ? "a" : "div");
+    rowEl.className = "perc-row ty-pending";
+    if (isObj) {
+      rowEl.href = raw.href;
+      rowEl.target = "_blank";
+      rowEl.rel = "noopener noreferrer";
+    }
+    rowEl.innerHTML = `<span class="perc-key"></span><span class="contact-sep">:</span><span class="perc-val"></span>`;
+    bodyEl.appendChild(rowEl);
+    prepType(rowEl.querySelector(".perc-key"), periodo);
+    prepType(rowEl.querySelector(".perc-val"), valStr);
+  });
+
+  // I numeri di riga restano a 0 finché la rivelazione non li scopre: senza
+  // questo comparirebbero tutti insieme, visto che il contenuto esiste già.
+  ["perc-title-ln","perc-body-ln","perc-close-ln","perc-empty-ln"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.dataset.fixedRows = "0";
+      // La riga vuota di coda contiene solo lo span dei numeri: azzerandolo
+      // collasserebbe, e il documento si allungherebbe a fine scrittura.
+      if (id.endsWith("-empty-ln")) el.classList.add("ty-reserve");
+    });
+}
+
+async function revealPercorso() {
+  const titleEl = document.getElementById("perc-title-text");
+  const bodyEl  = document.getElementById("percorso-body");
+  const closeEl = document.getElementById("perc-close-text");
+  const titleLn = document.getElementById("perc-title-ln");
+  const bodyLn  = document.getElementById("perc-body-ln");
+  const closeLn = document.getElementById("perc-close-ln");
+  const s = sec.percorso;
+
+  delete titleLn.dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(titleEl.closest(".code-row"));
+  await typeInto(titleEl, s);
+
+  let shown = 0;
+  for (const rowEl of bodyEl.querySelectorAll(".perc-row")) {
+    rowEl.classList.remove("ty-pending");
+    markRevealed(bodyEl, rowEl);
+    shown += rowsOf(rowEl);
+    bodyLn.dataset.fixedRows = String(shown);
+    setBlockH(bodyEl);
+    updateIndentLineH(rowEl);
+    recomputeLineNumbers();
+
+    const valEl = rowEl.querySelector(".perc-val");
+    await typeInto(rowEl.querySelector(".perc-key"), s);
+    await typeInto(valEl, s);
   }
+  delete bodyLn.dataset.fixedRows;
 
-  revealContent.textContent = text + "\n ";
-  updateRevealLn();
-  revealContent.classList.remove("typing-cursor");
-  sec.reveal.done = true;
+  delete closeLn.dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(closeEl.closest(".code-row"));
+  await typeInto(closeEl, s);
+  { const el = document.getElementById("perc-empty-ln"); delete el.dataset.fixedRows; el.classList.remove("ty-reserve"); }
+
+  s.done = true;
+  recomputeLineNumbers();
+  await fast(s, 200);
   startSection("tools");
 }
 
 /* ============================================================
    TOOLS SECTION
    ============================================================ */
-async function typeToolsSection() {
+async function revealTools() {
+  const bodyEl  = document.getElementById("tools-body");
   const titleEl = document.getElementById("tools-title-text");
   const closeEl = document.getElementById("tools-close-text");
+  const bodyLn  = document.getElementById("tools-body-ln");
   const s = sec.tools;
-  const titleTxt = "const strumenti = [";
 
-  titleEl.classList.add("typing-cursor");
-  for (let i = 1; i <= titleTxt.length; i++) {
-    if (s.skip) { titleEl.textContent = titleTxt; break; }
-    titleEl.textContent = titleTxt.substring(0, i);
-    recomputeLineNumbers();
-    await sleep(rnd(5, 25));
-  }
+  delete document.getElementById("tools-title-ln").dataset.fixedRows;
   recomputeLineNumbers();
-  titleEl.classList.remove("typing-cursor");
+  setCursorEl(titleEl.closest(".code-row"));
+  await typeInto(titleEl, s);
 
-  await renderToolsItems();
-
-  closeEl.classList.add("typing-cursor");
-  for (let i = 1; i <= 2; i++) {
-    if (s.skip) { closeEl.textContent = "];"; break; }
-    closeEl.textContent = "];".substring(0, i);
+  // Scopre un elemento e riallinea numeri di riga, barra e linea di indentazione.
+  const scopri = el => {
+    el.classList.remove("ty-pending");
+    markRevealed(bodyEl, el);
+    bodyLn.dataset.fixedRows = String(revealedRows(bodyEl));
+    setBlockH(bodyEl);
+    updateIndentLineH(el);
     recomputeLineNumbers();
-    await sleep(rnd(5, 25));
+  };
+
+  for (const group of bodyEl.querySelectorAll(".tools-categories > div")) {
+    scopri(group.querySelector(".tools-cat-comment"));
+    await fast(s, 80);
+    for (const card of group.querySelectorAll(".tool-icon-card")) {
+      scopri(card);
+      card.classList.add("card-reveal");
+      await fast(s, 50);
+    }
   }
+  delete bodyLn.dataset.fixedRows;
+
+  delete document.getElementById("tools-close-ln").dataset.fixedRows;
   recomputeLineNumbers();
-  closeEl.classList.remove("typing-cursor");
+  setCursorEl(closeEl.closest(".code-row"));
+  await typeInto(closeEl, s);
+  { const el = document.getElementById("tools-empty-ln"); delete el.dataset.fixedRows; el.classList.remove("ty-reserve"); }
+
   s.done = true;
-  document.getElementById("tools-section").classList.add("section-done");
   recomputeLineNumbers();
   await fast(s, 200);
   startSection("projects");
@@ -569,35 +738,20 @@ const techIconMap = {
   "VSCode":     { path: "assets/icons/vscode-original.svg" },
 };
 
-async function renderToolsItems() {
+function buildTools() {
   const bodyEl = document.getElementById("tools-body");
-  const bln    = document.getElementById("tools-body-ln");
+  prepType(document.getElementById("tools-title-text"), "const strumenti = [");
+  prepType(document.getElementById("tools-close-text"), "];");
+
   bodyEl.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "tools-categories";
   bodyEl.appendChild(wrap);
 
-  // Crescita smooth: una riga per tick (60ms) finché shown < target
-  bln.dataset.fixedRows = "0";
-  let shown = 0;
-  let renderingDone = false;
-  (async () => {
-    while (!renderingDone) {
-      const lh = getLineH(bodyEl) || 28;
-      const target = Math.round(bodyEl.offsetHeight / lh);
-      if (shown < target) {
-        shown++;
-        bln.dataset.fixedRows = String(shown);
-      }
-      recomputeLineNumbers();
-      await fast(sec.tools, 60);
-    }
-  })();
-
   for (const [cat, items] of Object.entries(iMieiStrumenti)) {
     const group = document.createElement("div");
     const comment = document.createElement("span");
-    comment.className = "tools-cat-comment";
+    comment.className = "tools-cat-comment ty-pending";
     comment.textContent = "// " + cat;
     group.appendChild(comment);
     const row = document.createElement("div");
@@ -605,8 +759,9 @@ async function renderToolsItems() {
     group.appendChild(row);
     wrap.appendChild(group);
     for (const item of items) {
+      // card-reveal non va messa qui: è un'animazione, parte alla scoperta.
       const card = document.createElement("div");
-      card.className = "tool-icon-card card-reveal";
+      card.className = "tool-icon-card ty-pending";
       const icon = techIconMap[item];
       if (icon) {
         const img = document.createElement("img");
@@ -620,95 +775,71 @@ async function renderToolsItems() {
       lbl.textContent = item;
       card.appendChild(lbl);
       row.appendChild(card);
-      setBlockH(bodyEl);
-      updateIndentLineH(card);
-      await fast(sec.tools, 50);
     }
-    setBlockH(bodyEl);
-    await fast(sec.tools, 80);
   }
-  setBlockH(bodyEl);
-  renderingDone = true;
-  await sleep(50);
-  // Catch-up smooth fino al numero finale di righe
-  const finalLh = getLineH(bodyEl) || 28;
-  const finalTarget = Math.max(1, Math.round(bodyEl.offsetHeight / finalLh));
-  while (shown < finalTarget) {
-    shown++;
-    bln.dataset.fixedRows = String(shown);
-    recomputeLineNumbers();
-    if (!sec.tools.skip) await sleep(40);
-  }
-  delete bln.dataset.fixedRows;
-  recomputeLineNumbers();
+
+  ["tools-title-ln","tools-body-ln","tools-close-ln","tools-empty-ln"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.dataset.fixedRows = "0";
+      // La riga vuota di coda contiene solo lo span dei numeri: azzerandolo
+      // collasserebbe, e il documento si allungherebbe a fine scrittura.
+      if (id.endsWith("-empty-ln")) el.classList.add("ty-reserve");
+    });
 }
 
 /* ============================================================
    PROGETTI SECTION
    ============================================================ */
-async function typeProjSection() {
-  const titleEl = document.getElementById("proj-title-text");
-  const closeEl = document.getElementById("proj-close-text");
-  const s = sec.projects;
-  const titleTxt = "const progetti = [";
 
-  titleEl.classList.add("typing-cursor");
-  for (let i = 1; i <= titleTxt.length; i++) {
-    if (s.skip) { titleEl.textContent = titleTxt; break; }
-    titleEl.textContent = titleTxt.substring(0, i);
-    recomputeLineNumbers();
-    await sleep(rnd(5, 25));
-  }
-  recomputeLineNumbers();
-  titleEl.classList.remove("typing-cursor");
+/* Adatta il contenuto della riga chiusa della card alla larghezza disponibile,
+   dando priorità alla descrizione: nasconde i tech tag uno alla volta partendo
+   dall'ultimo dell'array `tech` (tecnologia meno usata nel progetto) e lo
+   spazio liberato va alla descrizione, che è flex: 1. La descrizione può
+   andare a capo, ma solo finché resta dentro l'altezza della card: quando la
+   supera si toglie un altro tag. Si ferma quando resta un solo tag; se anche
+   così sfora, nasconde la descrizione lasciando il solo tag della tecnologia
+   più usata.
+   card: elemento .project-card da adattare. Nessun valore di ritorno. */
+function fitCardRow(card) {
+  if (card.classList.contains("gol-focus-active")) return;
+  const row = card.querySelector(".proj-card-row");
+  if (!row) return;
+  const desc = card.querySelector(".proj-desc");
+  const tags = [...card.querySelectorAll(".proj-card-footer .tech-tag")];
 
-  await renderProjItems();
-  closeEl.classList.add("typing-cursor");
-  const closeTxt = "];";
-  for (let i = 1; i <= closeTxt.length; i++) {
-    if (s.skip) { closeEl.textContent = closeTxt; break; }
-    closeEl.textContent = closeTxt.substring(0, i);
-    recomputeLineNumbers();
-    await sleep(rnd(5, 25));
-  }
-  recomputeLineNumbers();
-  closeEl.classList.remove("typing-cursor");
-  s.done = true;
-  document.getElementById("projects-section").classList.add("section-done");
-  recomputeLineNumbers();
-  await fast(s, 200);
-  startSection("contacts");
+  // Reset: riparte sempre dal contenuto completo, così al crescere della
+  // finestra gli elementi tolti tornano visibili.
+  tags.forEach(t => t.hidden = false);
+  if (!desc) return;
+  desc.hidden = false;
+
+  const budget = parseFloat(getComputedStyle(row).maxHeight) || 0;
+  if (!budget) return;
+  // La riga ha max-height fissa: va sbloccata durante la misura, altrimenti
+  // offsetHeight resta sempre entro il budget e l'overflow è invisibile.
+  row.style.maxHeight = "none";
+  const overflows = () => row.offsetHeight > budget + 1;
+
+  for (let i = tags.length - 1; i > 0 && overflows(); i--) tags[i].hidden = true;
+  if (overflows()) desc.hidden = true;
+  row.style.maxHeight = "";
 }
 
-async function renderProjItems() {
+function buildProjects() {
   const listEl = document.getElementById("projects-list");
-  const bln    = document.getElementById("proj-body-ln");
+  prepType(document.getElementById("proj-title-text"), "const progetti = [");
+  prepType(document.getElementById("proj-close-text"), "];");
+
   listEl.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "projects-grid";
   listEl.appendChild(wrap);
 
-  // Crescita smooth: una riga per tick (60ms) finché shown < target
-  bln.dataset.fixedRows = "0";
-  let shown = 0;
-  let renderingDone = false;
-  (async () => {
-    while (!renderingDone) {
-      const lh = getLineH(listEl) || 28;
-      const target = Math.round(listEl.offsetHeight / lh);
-      if (shown < target) {
-        shown++;
-        bln.dataset.fixedRows = String(shown);
-      }
-      recomputeLineNumbers();
-      await fast(sec.projects, 60);
-    }
-  })();
-
   for (let i = 0; i < iMieiProgetti.length; i++) {
     const p = iMieiProgetti[i];
     const group = document.createElement("div");
-    group.className = "card-reveal";
+    group.className = "ty-pending";
     const comment = document.createElement("span");
     comment.className = "proj-card-comment";
     comment.textContent = "// " + p.nome.toLowerCase().replace(/ /g, "-") + ".js";
@@ -813,6 +944,7 @@ async function renderProjItems() {
       <div class="proj-card-expanded">
         <div class="proj-card-expanded-inner">
           <div class="proj-card-expanded-text">${p.dettagli}</div>
+          ${linkHtml ? `<div class="proj-card-links">${linkHtml}</div>` : ``}
         </div>
       </div>` : ``;
     const golInfoCardHtml = p.isGol ? `<div class="gol-info-card" aria-hidden="true"><button type="button" class="gol-info-close" aria-label="Chiudi">×</button><p class="gol-info-title"></p><p class="gol-info-desc"></p></div>` : ``;
@@ -822,7 +954,7 @@ async function renderProjItems() {
           <p class="proj-name">${p.nome}</p>
           ${middleHtml}
         </div>
-        <div class="proj-card-footer">${techTags}${linkHtml}</div>
+        <div class="proj-card-footer">${techTags}</div>
       </div>
       ${golHtml}
       ${speedSliderHtml}
@@ -853,59 +985,77 @@ async function renderProjItems() {
     } else if (p.link && p.link !== "#" && !p.isGol) {
       card.addEventListener("click", () => window.open(p.link, "_blank"));
     }
-    const linkEl = card.querySelector(".proj-open-link");
-    if (linkEl) linkEl.addEventListener("click", e => e.stopPropagation());
+    card.querySelectorAll(".proj-open-link").forEach(linkEl => {
+      linkEl.addEventListener("click", e => e.stopPropagation());
+    });
 
     group.appendChild(card);
     wrap.appendChild(group);
-    setBlockH(listEl);
-    updateIndentLineH(card);
-    await fast(sec.projects, 180);
+    fitCardRow(card);
   }
-  setBlockH(listEl);
-  renderingDone = true;
-  await sleep(50);
-  // Catch-up smooth fino al numero finale di righe
-  const finalLh = getLineH(listEl) || 28;
-  const finalTarget = Math.max(1, Math.round(listEl.offsetHeight / finalLh));
-  while (shown < finalTarget) {
-    shown++;
-    bln.dataset.fixedRows = String(shown);
-    recomputeLineNumbers();
-    if (!sec.projects.skip) await sleep(40);
-  }
-  delete bln.dataset.fixedRows;
-  recomputeLineNumbers();
+
+  ["proj-title-ln","proj-body-ln","proj-close-ln","proj-empty-ln"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.dataset.fixedRows = "0";
+      // La riga vuota di coda contiene solo lo span dei numeri: azzerandolo
+      // collasserebbe, e il documento si allungherebbe a fine scrittura.
+      if (id.endsWith("-empty-ln")) el.classList.add("ty-reserve");
+    });
   setupProjResizeObserver();
-  requestAnimationFrame(() => document.body.classList.add("cards-animatable"));
+}
+
+async function revealProjects() {
+  const listEl  = document.getElementById("projects-list");
+  const titleEl = document.getElementById("proj-title-text");
+  const closeEl = document.getElementById("proj-close-text");
+  const bodyLn  = document.getElementById("proj-body-ln");
+  const s = sec.projects;
+
+  delete document.getElementById("proj-title-ln").dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(titleEl.closest(".code-row"));
+  await typeInto(titleEl, s);
+
+  for (const group of listEl.querySelectorAll(".projects-grid > .ty-pending")) {
+    group.classList.remove("ty-pending");
+    group.classList.add("card-reveal");
+    markRevealed(listEl, group);
+    bodyLn.dataset.fixedRows = String(revealedRows(listEl));
+    setBlockH(listEl);
+    updateIndentLineH(group);
+    recomputeLineNumbers();
+    await fast(s, 180);
+  }
+  delete bodyLn.dataset.fixedRows;
+
+  delete document.getElementById("proj-close-ln").dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(closeEl.closest(".code-row"));
+  await typeInto(closeEl, s);
+  { const el = document.getElementById("proj-empty-ln"); delete el.dataset.fixedRows; el.classList.remove("ty-reserve"); }
+
+  s.done = true;
+  recomputeLineNumbers();
+  await fast(s, 200);
+  startSection("contacts");
 }
 
 /* ============================================================
    CONTATTI SECTION
    ============================================================ */
-async function typeContactSection() {
+function buildContatti() {
   const titleEl = document.getElementById("contact-title-text");
   const bodyEl  = document.getElementById("contact-body");
   const closeEl = document.getElementById("contact-close-text");
 
-  const s = sec.contacts;
-  const titleTxt = "const contatti = {";
+  prepType(titleEl, "const contatti = {");
+  prepType(closeEl, "};");
 
-  titleEl.classList.add("typing-cursor");
-  for (let i = 1; i <= titleTxt.length; i++) {
-    if (s.skip) { titleEl.textContent = titleTxt; updateContactLn(); break; }
-    titleEl.textContent = titleTxt.substring(0, i);
-    updateContactLn();
-    await sleep(rnd(5, 25));
-  }
-  titleEl.classList.remove("typing-cursor");
-
-  const entries = Object.entries(contatti);
-  for (let ei = 0; ei < entries.length; ei++) {
-    const [k, raw] = entries[ei];
+  const isMobile = window.innerWidth <= 600;
+  Object.entries(contatti).forEach(([k, raw], ei, arr) => {
     const isObj = typeof raw === "object" && raw !== null;
     const fullDisplay = isObj ? raw.display : raw;
-    const isMobile = window.innerWidth <= 600;
     const display = (isMobile && k !== "email")
       ? fullDisplay.slice(fullDisplay.lastIndexOf("/") + 1)
       : fullDisplay;
@@ -916,138 +1066,193 @@ async function typeContactSection() {
       : (k === "email"
           ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(raw)}`
           : `https://${raw}`);
-    const valStr = `"${display}"${ei < entries.length - 1 ? "," : ""}`;
     const a = document.createElement("a");
-    a.className = "contact-link";
+    a.className = "contact-link ty-pending";
     a.href = href;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.innerHTML = `<span class="contact-key"></span><span class="contact-sep">:</span><span class="contact-val contact-cursor"></span>`;
+    a.innerHTML = `<span class="contact-key"></span><span class="contact-sep">:</span><span class="contact-val"></span>`;
     bodyEl.appendChild(a);
+    prepType(a.querySelector(".contact-key"), k);
+    prepType(a.querySelector(".contact-val"), `"${display}"${ei < arr.length - 1 ? "," : ""}`);
+  });
+
+  ["contact-title-ln","contact-body-ln","contact-close-ln","contact-empty-ln"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.dataset.fixedRows = "0";
+      // La riga vuota di coda contiene solo lo span dei numeri: azzerandolo
+      // collasserebbe, e il documento si allungherebbe a fine scrittura.
+      if (id.endsWith("-empty-ln")) el.classList.add("ty-reserve");
+    });
+}
+
+async function revealContatti() {
+  const titleEl = document.getElementById("contact-title-text");
+  const bodyEl  = document.getElementById("contact-body");
+  const closeEl = document.getElementById("contact-close-text");
+  const titleLn = document.getElementById("contact-title-ln");
+  const bodyLn  = document.getElementById("contact-body-ln");
+  const closeLn = document.getElementById("contact-close-ln");
+  const s = sec.contacts;
+
+  delete titleLn.dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(titleEl.closest(".code-row"));
+  await typeInto(titleEl, s);
+
+  let shown = 0;
+  for (const a of bodyEl.querySelectorAll(".contact-link")) {
+    a.classList.remove("ty-pending");
+    markRevealed(bodyEl, a);
+    shown += rowsOf(a);
+    bodyLn.dataset.fixedRows = String(shown);
     setBlockH(bodyEl);
     updateIndentLineH(a);
-    updateContactLn();
+    recomputeLineNumbers();
 
-    const keyEl = a.querySelector(".contact-key");
     const valEl = a.querySelector(".contact-val");
-
-    if (s.skip) {
-      keyEl.textContent = k;
-      valEl.textContent = valStr;
-      valEl.classList.remove("contact-cursor");
-      updateContactLn();
-      continue;
-    }
-    for (let i = 1; i <= k.length; i++) {
-      if (s.skip) { keyEl.textContent = k; break; }
-      keyEl.textContent = k.substring(0, i);
-      await sleep(rnd(5, 25));
-    }
-    for (let i = 1; i <= valStr.length; i++) {
-      if (s.skip) { valEl.textContent = valStr; break; }
-      valEl.textContent = valStr.substring(0, i);
-      updateContactLn();
-      await sleep(rnd(5, 25));
-    }
-    valEl.classList.remove("contact-cursor");
-    updateContactLn();
+    await typeInto(a.querySelector(".contact-key"), s);
+    await typeInto(valEl, s);
   }
+  delete bodyLn.dataset.fixedRows;
 
-  closeEl.classList.add("typing-cursor");
-  const closeTxt = "};";
-  for (let i = 1; i <= closeTxt.length; i++) {
-    if (s.skip) { closeEl.textContent = closeTxt; updateContactLn(); break; }
-    closeEl.textContent = closeTxt.substring(0, i);
-    updateContactLn();
-    await sleep(rnd(5, 25));
-  }
-  closeEl.classList.remove("typing-cursor");
+  delete closeLn.dataset.fixedRows;
+  recomputeLineNumbers();
+  setCursorEl(closeEl.closest(".code-row"));
+  await typeInto(closeEl, s);
+  { const el = document.getElementById("contact-empty-ln"); delete el.dataset.fixedRows; el.classList.remove("ty-reserve"); }
+
   s.done = true;
-  document.getElementById("contact-section").classList.add("section-done");
-  await sleep(120);
+  recomputeLineNumbers();
+  await fast(s, 120);
   placeFinalBraceAndLine();
 }
 
 function placeFinalBraceAndLine() {
-  const contactSec = document.getElementById("contact-section");
-  const h1r = document.querySelector("h1").getBoundingClientRect();
-  const fullName = document.getElementById("full-name");
-  const slh = singleLineHeight(fullName);
-  const lt  = h1r.top + window.scrollY + lastNameLines * slh;
-  const ll  = h1r.left + nameLn.offsetWidth + parseInt(getComputedStyle(nameLn).marginRight);
-
-  closingBrace.style.display    = "block";
-  closingBrace.style.visibility = "hidden";
-  const braceH = closingBrace.offsetHeight || 42;
-  closingBrace.style.visibility = "";
-
-  const emptyRow = document.getElementById("contact-empty-ln")?.closest(".code-row");
-  const closeRow = document.getElementById("contact-close-text").closest(".code-row");
-  const refRect  = (emptyRow || closeRow || contactSec).getBoundingClientRect();
-  const refBottom = refRect.bottom + window.scrollY;
-  const braceTop  = refBottom;
-
-  closingBrace.style.left = ll + "px";
-  closingBrace.style.top  = braceTop + "px";
+  closingBrace.style.display = "block";
   const braceLn = document.getElementById("brace-line-numbers");
-  if (braceLn) {
-    braceLn.style.left = (h1r.left + window.scrollX) + "px";
-    braceLn.style.top  = braceTop + "px";
-    braceLn.style.display = "block";
-    recomputeLineNumbers();
-  }
-  const finalH = braceTop + braceH + 8;
-  document.body.style.minHeight = "";
-  // Pulisci anche minHeight su <html> (eventualmente impostato dal session-restore
-  // a (scrollY + innerHeight + 200)px): se rimane > finalH, "height" non lo rispetta
-  // e lo scroll può sforare la graffa.
-  document.documentElement.style.minHeight = "";
-  document.body.style.height = finalH + "px";
-  document.documentElement.style.height = finalH + "px";
-  // Forza ri-misura del canvas GoL: senza questo il canvas (absolute, full-doc)
-  // resta gigante perch&eacute; il poll-interval interno legge scrollHeight =
-  // canvas.height e non rileva shrink. Risultato: scrollbar mostra spazio oltre
-  // la graffa.
-  if (window.__gol && window.__gol.resize) window.__gol.resize();
-  window.__maxScroll = Math.max(0, finalH - window.innerHeight);
-  if (!window.__scrollClampBound) {
-    window.__scrollClampBound = true;
-    window.addEventListener("scroll", () => {
-      if (window.__maxScroll != null && window.scrollY > window.__maxScroll) {
-        window.scrollTo(0, window.__maxScroll);
-      }
-    }, { passive: true });
-    window.addEventListener("wheel", e => {
-      if (window.__maxScroll != null && window.scrollY >= window.__maxScroll && e.deltaY > 0) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-    // Track Y precedente per determinare direzione del gesto: solo lo
-    // scroll verso il basso oltre __maxScroll va bloccato; quello verso
-    // l'alto deve restare libero.
-    let _lastTouchY = 0;
-    window.addEventListener("touchstart", e => {
-      if (e.touches && e.touches[0]) _lastTouchY = e.touches[0].clientY;
-    }, { passive: true });
-    window.addEventListener("touchmove", e => {
-      // Non bloccare drag su slider/input interattivi (es. velocità GoL su mobile)
-      if (e.target && e.target.closest && e.target.closest("input, [data-tweaks-ignore]")) return;
-      const cur = (e.touches && e.touches[0]) ? e.touches[0].clientY : _lastTouchY;
-      const delta = cur - _lastTouchY; // > 0 = dito gi&ugrave; (scroll up); < 0 = dito su (scroll down)
-      _lastTouchY = cur;
-      if (window.__maxScroll != null && window.scrollY >= window.__maxScroll && delta < 0) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-  }
-
-  indentLine.style.left = ll + "px";
-  indentLine.style.top  = lt + "px";
-  const targetH = Math.max(braceTop - lt, 0);
+  if (braceLn) braceLn.style.display = "block";
   indentLine.style.display = "block";
-  _lineTargetH = targetH;
+
+  // Posiziona graffa e altezza. indentDone è ancora false, quindi la linea di
+  // indentazione non viene scritta qui: il suo ultimo tratto è animato sotto.
+  pinDocHeight();
+
+  const h1r = document.querySelector("h1").getBoundingClientRect();
+  const lt  = h1r.top + window.scrollY + lastNameLines * singleLineHeight(document.getElementById("full-name"));
+  const braceTop = parseFloat(closingBrace.style.top) || lt;
+  _lineTargetH = Math.max(braceTop - lt, 0);
   if (!_lineTweenRunning) { _lineTweenRunning = true; requestAnimationFrame(_tweenLine); }
   window.indentDone = true;
+
+  // Ultima sezione e blocco globale: le regioni che diventano pronte solo ora.
+  ensureFoldHandles();
+}
+
+/* ============================================================
+   CODE FOLDING
+   Ogni barra di indentazione delimita una regione piegabile. Ci sono due
+   livelli annidati: la barra globale (#indent-line, dalla riga del nome fino
+   alla graffa) e le barre di sezione (.code-block::before, il corpo di ogni
+   sezione). La freccetta vive in overlay nella gutter, cioè nello spazio fra
+   la colonna dei numeri e la barra della propria regione.
+   ============================================================ */
+
+/* Elenca le regioni piegabili. Ritorna array di
+   { handleRow, global, targets, ready }: handleRow è la riga che porta la
+   freccetta, targets gli elementi che il fold nasconde, ready() dice se il
+   contenuto della regione è già stato generato per intero. */
+function foldRegions() {
+  const sections = [...document.querySelectorAll(".code-section")];
+  const regions = [{
+    handleRow: document.querySelector("h1"),
+    global: true,
+    targets: [revealSection, ...sections],
+    // Racchiude tutte le sezioni: pronta solo a pagina completa, altrimenti
+    // piegarla nasconderebbe sezioni ancora in scrittura.
+    ready: () => secOrder.every(n => sec[n].done),
+  }];
+  sections.forEach(secEl => {
+    const titleRow = secEl.querySelector(".code-row");
+    const bodyRow  = secEl.querySelector(".code-block")?.closest(".code-row");
+    if (!titleRow || !bodyRow) return;
+    const key = SECTION_KEY_BY_ID[secEl.id];
+    regions.push({
+      handleRow: titleRow,
+      global: false,
+      targets: [bodyRow],
+      ready: () => !!(key && sec[key].done),
+    });
+  });
+  return regions;
+}
+
+/* Piega o espande una regione e riallinea la geometria.
+   region: voce di foldRegions(). handle: il bottone che l'ha innescata. */
+function toggleFold(region, handle) {
+  const fold = !handle.classList.contains("is-folded-on");
+  region.targets.forEach(el => el.classList.toggle("is-folded", fold));
+  handle.classList.toggle("is-folded-on", fold);
+  handle.setAttribute("aria-expanded", String(!fold));
+
+  // recomputeLineNumbers ri-pinna minHeight sui body: le barre e la graffa
+  // vanno misurate dopo, sulle altezze definitive.
+  recomputeLineNumbers();
+  refreshAllBlockH();
+  pinDocHeight();
+  // Il documento si è accorciato sotto la posizione corrente: senza questo
+  // ci pensa il clamp listener, ma strattonando a scroll già avvenuto.
+  if (window.__maxScroll != null && window.scrollY > window.__maxScroll) {
+    window.scrollTo(0, window.__maxScroll);
+  }
+  // Assesta e ridimensiona il canvas GoL alla nuova altezza del documento.
+  pumpLayoutDuring(120);
+}
+
+/* Accende la classe gutter-hover finché il puntatore sta a sinistra della prima
+   barra di indentazione, così tutte le freccette compaiono insieme.
+   Confronta con indentLine.style.left invece di getBoundingClientRect per non
+   forzare un layout a ogni mousemove; la pagina non scrolla in orizzontale
+   (html ha overflow-x: hidden), quindi x di viewport e di pagina coincidono. */
+function bindGutterHover() {
+  let inside = false;
+  const setInside = next => {
+    if (next === inside) return;
+    inside = next;
+    document.body.classList.toggle("gutter-hover", inside);
+  };
+  document.addEventListener("mousemove", e => {
+    const edge = parseFloat(indentLine.style.left) || 0;
+    setInside(edge > 0 && e.clientX < edge);
+  }, { passive: true });
+  document.addEventListener("mouseleave", () => setInside(false));
+}
+
+/* Crea le maniglie mancanti. Idempotente: va richiamata via via che le sezioni
+   si completano, così ogni freccetta compare appena il suo blocco esiste
+   invece di aspettare che tutta la pagina sia generata. */
+let _gutterHoverBound = false;
+function ensureFoldHandles() {
+  if (!_gutterHoverBound) { _gutterHoverBound = true; bindGutterHover(); }
+  foldRegions().forEach(region => {
+    if (!region.ready()) return;
+    if (region.handleRow.querySelector(":scope > .fold-handle")) return;
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "fold-handle" + (region.global ? " fold-handle--global" : "");
+    handle.setAttribute("aria-label", "Piega o espandi il blocco");
+    handle.setAttribute("aria-expanded", "true");
+    // viewBox stretto attorno alla sola freccetta + preserveAspectRatio="none":
+    // il disegno riempie esattamente il box, senza il letterboxing che con un
+    // viewBox quadrato lasciava la freccetta a una frazione della cella.
+    handle.innerHTML = `<svg class="fold-chevron" viewBox="0 0 6 10" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,1 5,5 1,9" vector-effect="non-scaling-stroke" stroke-width="1.4"/></svg>`;
+    handle.addEventListener("click", e => {
+      e.stopPropagation();
+      toggleFold(region, handle);
+    });
+    region.handleRow.appendChild(handle);
+  });
 }
 
 /* ============================================================
@@ -1220,13 +1425,13 @@ let _layoutPumpEnd = 0;
 let _layoutPumpRunning = false;
 function pumpLayoutDuring(durationMs) {
   _layoutPumpEnd = Math.max(_layoutPumpEnd, performance.now() + durationMs);
-  const listEl = document.getElementById("projects-list");
-  if (listEl) listEl.classList.add("no-block-transition");
+  // Durante un'animazione la transition CSS di --block-h (320ms) farebbe
+  // inseguire le barre con un ritardo visibile: va disattivata su tutte.
+  document.querySelectorAll(".code-block").forEach(b => b.classList.add("no-block-transition"));
   if (_layoutPumpRunning) return;
   _layoutPumpRunning = true;
   const tick = () => {
-    const list = document.getElementById("projects-list");
-    if (list) setBlockH(list);
+    refreshAllBlockH();
     // Ricalcola line-numbers durante la transizione: lineRows() per
     // "dynamic-block" pinna minHeight sul source, impedendo allo
     // shrink di propagarsi e al ResizeObserver di scattare in chiusura.
@@ -1236,7 +1441,8 @@ function pumpLayoutDuring(durationMs) {
       requestAnimationFrame(tick);
     } else {
       _layoutPumpRunning = false;
-      if (list) list.classList.remove("no-block-transition");
+      document.querySelectorAll(".code-block.no-block-transition")
+        .forEach(b => b.classList.remove("no-block-transition"));
       // Canvas shrink: dopo l'animazione, ridimensiona il canvas GoL alla nuova
       // altezza del documento (già aggiornata da repositionBrace nell'ultimo tick).
       if (window.__gol && window.__gol.resize) window.__gol.resize();
@@ -1550,7 +1756,6 @@ function checkSectionsPassed() {
     const rect = s.el.getBoundingClientRect();
     const passed = rect.bottom < 0;
     if (passed) {
-      if (!s.done) s.skip = true;
       if (!s.started) { s.started = true; if (name === "reveal") hasTyped = true; s.start(); }
       const nx = nextSection(name);
       if (nx) startSection(nx);
@@ -1559,6 +1764,9 @@ function checkSectionsPassed() {
 }
 
 window.addEventListener("scroll", () => {
+  // Unica sorgente di scrollY per skipNow: il predicato non deve leggere il
+  // layout, viene interrogato a ogni carattere.
+  _scrollY = window.scrollY;
   const h1       = document.querySelector("h1");
   const fullName = document.getElementById("full-name");
   if (window.scrollY > 0 && animFinished) fullName.classList.add("no-cursor");
@@ -1574,7 +1782,7 @@ window.addEventListener("scroll", () => {
     hasTyped = true;
     sec.reveal.started = true;
     startIndentLine();
-    typeRevealText();
+    revealBio();
   }
   if (animFinished && window.scrollY > 0) startIndentLine();
   checkSectionsPassed();
@@ -1609,6 +1817,10 @@ function _tweenLine() {
   requestAnimationFrame(_tweenLine);
 }
 function updateIndentLineH(el) {
+  // Ogni punto di generazione passa di qui con l'elemento appena scoperto:
+  // è il posto naturale per aggiornare il cursore dello skip. Va sopra la
+  // guardia, che altrimenti lo congelerebbe a fine typing.
+  setCursorEl(el || revealContent);
   if (!indentLineStarted || window.indentDone) return;
   const h1r = document.querySelector("h1").getBoundingClientRect();
   const slh = singleLineHeight(document.getElementById("full-name"));
@@ -1623,8 +1835,31 @@ function updateIndentLineH(el) {
 }
 
 window.addEventListener("resize", () => {
+  // Il font-size dipende da vh/clamp: le altezze riga in cache non valgono più.
+  clearLineHCache();
+  // h1 usa 7.5vw: cambiando larghezza la riserva va rimisurata prima di
+  // ricalcolare il margine della reveal section, che ci si appoggia.
+  measureH1Height();
   updateNameLn(); syncLnWidth(); updateRevealPos(); updateToolsLn();
-  if (window.indentDone) repositionBrace();
+  // Il testo si ri-manda a capo: i body cambiano altezza e le barre verticali
+  // vanno rimisurate, altrimenti restano al valore px precedente.
+  refreshAllBlockH();
+  // fitCardRow può nascondere tag e descrizione, cambiando l'altezza delle
+  // card: va prima dello snap, che misura i body.
+  document.querySelectorAll(".project-card").forEach(fitCardRow);
+  snapBodyHeights();
+  pinDocHeight();
+});
+
+// Il font monospace cambia larghezze e altezza riga: butta la cache e rimisura
+// quando è davvero caricato.
+document.fonts?.ready.then(() => {
+  clearLineHCache();
+  document.querySelectorAll(".project-card").forEach(fitCardRow);
+  // Cambia l'altezza di riga, quindi cambia anche il multiplo a cui i body
+  // vanno arrotondati: va rifatto prima di ri-fissare l'altezza del documento.
+  snapBodyHeights();
+  pinDocHeight();
 });
 
 function repositionBrace() {
@@ -1636,7 +1871,10 @@ function repositionBrace() {
   const emptyRow = document.getElementById("contact-empty-ln")?.closest(".code-row");
   const closeRow = document.getElementById("contact-close-text").closest(".code-row");
   const refRect  = (emptyRow || closeRow || contactSec).getBoundingClientRect();
-  const braceTop = refRect.bottom + window.scrollY;
+  // Con il blocco globale piegato la riga di ancoraggio è display:none e il suo
+  // rect è tutto a zero: la graffa va invece subito sotto la riga del nome.
+  const refHidden = refRect.width === 0 && refRect.height === 0;
+  const braceTop = refHidden ? lt : refRect.bottom + window.scrollY;
   closingBrace.style.left = ll + "px";
   closingBrace.style.top  = braceTop + "px";
   const braceLn = document.getElementById("brace-line-numbers");
@@ -1646,12 +1884,76 @@ function repositionBrace() {
   }
   indentLine.style.left   = ll + "px";
   indentLine.style.top    = lt + "px";
-  indentLine.style.height = Math.max(braceTop - lt, 0) + "px";
+  // Finché il typing non è finito l'altezza della linea è guidata dal tween di
+  // updateIndentLineH, che la fa crescere insieme al contenuto scoperto.
+  if (window.indentDone) indentLine.style.height = Math.max(braceTop - lt, 0) + "px";
+
+  // La graffa può essere ancora display:none: va misurata lo stesso, altrimenti
+  // lo spazio riservato in fondo al documento non la comprenderebbe.
+  const hidden = !closingBrace.style.display || closingBrace.style.display === "none";
+  if (hidden) {
+    closingBrace.style.display = "block";
+    closingBrace.style.visibility = "hidden";
+  }
   const bh = closingBrace.offsetHeight || 42;
+  if (hidden) {
+    closingBrace.style.display = "";
+    closingBrace.style.visibility = "";
+  }
+
   const finalH = braceTop + bh + 8;
   document.body.style.height = finalH + "px";
   document.documentElement.style.height = finalH + "px";
   window.__maxScroll = Math.max(0, finalH - window.innerHeight);
+}
+
+/* Unico punto che fissa l'altezza del documento. L'ordine è obbligato:
+   recomputeLineNumbers ri-pinna le minHeight dei body, quindi barre e graffa
+   vanno misurate dopo, sulle altezze definitive.
+   Nessun parametro, nessun valore di ritorno. */
+function pinDocHeight() {
+  refreshCursorPos();
+  recomputeLineNumbers();
+  refreshAllBlockH();
+  repositionBrace();
+  // Il floor scritto a parse-time dal restore dello scroll va tolto: se resta
+  // più alto di height, lo scroll sfora la graffa.
+  document.documentElement.style.minHeight = "";
+  document.body.style.minHeight = "";
+  if (window.__gol && window.__gol.resize) window.__gol.resize();
+}
+
+/* Impedisce di scrollare oltre la graffa. Bindato una sola volta all'init:
+   con il contenuto costruito subito, __maxScroll è noto dal primo frame. */
+function bindScrollClamp() {
+  if (window.__scrollClampBound) return;
+  window.__scrollClampBound = true;
+  window.addEventListener("scroll", () => {
+    if (window.__maxScroll != null && window.scrollY > window.__maxScroll) {
+      window.scrollTo(0, window.__maxScroll);
+    }
+  }, { passive: true });
+  window.addEventListener("wheel", e => {
+    if (window.__maxScroll != null && window.scrollY >= window.__maxScroll && e.deltaY > 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  // Track Y precedente per determinare direzione del gesto: solo lo scroll
+  // verso il basso oltre __maxScroll va bloccato, quello verso l'alto no.
+  let lastTouchY = 0;
+  window.addEventListener("touchstart", e => {
+    if (e.touches && e.touches[0]) lastTouchY = e.touches[0].clientY;
+  }, { passive: true });
+  window.addEventListener("touchmove", e => {
+    // Non bloccare drag su slider/input interattivi (es. velocità GoL su mobile)
+    if (e.target && e.target.closest && e.target.closest("input, [data-tweaks-ignore]")) return;
+    const cur = (e.touches && e.touches[0]) ? e.touches[0].clientY : lastTouchY;
+    const delta = cur - lastTouchY; // > 0 = dito giù (scroll up); < 0 = scroll down
+    lastTouchY = cur;
+    if (window.__maxScroll != null && window.scrollY >= window.__maxScroll && delta < 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 }
 
 if ("scrollRestoration" in history) history.scrollRestoration = "auto";
@@ -1666,9 +1968,45 @@ window.addEventListener("beforeunload", () => {
   try { sessionStorage.setItem("__scrollY", String(window.scrollY)); } catch (e) {}
 });
 
+/* Costruisce subito tutto il contenuto che verrà rivelato dopo, così il layout
+   è definitivo dal primo frame. Lo script è caricato con defer: il DOM esiste.
+   Le sezioni non ancora convertite continuano a costruirsi durante il typing. */
+/* Applica subito l'arrotondamento al multiplo di riga che lineRows() fa sui
+   .code-block in modalità dynamic-block. Durante la scrittura quei body hanno
+   data-fixed-rows, quindi lineRows esce prima e non pinna: senza questo il pin
+   arriverebbe tutto insieme a scrittura finita e la pagina si allungherebbe di
+   una frazione di riga per sezione. Nessun valore di ritorno. */
+function snapBodyHeights() {
+  const lns = ["perc-body-ln","tools-body-ln","proj-body-ln","contact-body-ln"]
+    .map(id => document.getElementById(id))
+    .filter(Boolean);
+  const saved = lns.map(el => el.dataset.fixedRows);
+  lns.forEach(el => delete el.dataset.fixedRows);
+  recomputeLineNumbers();   // misura libera e pinna minHeight sui body
+  lns.forEach((el, i) => { if (saved[i] != null) el.dataset.fixedRows = saved[i]; });
+  recomputeLineNumbers();   // ripristina la numerazione parziale in corso
+}
+
+function buildAll() {
+  buildPercorso();
+  buildContatti();
+  buildBio();
+  buildTools();
+  buildProjects();
+  snapBodyHeights();
+}
+buildAll();
+bindScrollClamp();
+pinDocHeight();
+
 window.addEventListener("load", () => {
+  measureH1Height();
   updateRevealPos(); syncLnWidth();
+  pinDocHeight();
+  // Lo scroll pu� essere gi� stato ripristinato dal browser prima di qui.
+  _scrollY = window.scrollY;
   sec.reveal.el   = revealSection;
+  sec.percorso.el = document.getElementById("percorso-section");
   sec.tools.el    = document.getElementById("tools-section");
   sec.projects.el = document.getElementById("projects-section");
   sec.contacts.el = document.getElementById("contact-section");
@@ -1693,7 +2031,7 @@ window.addEventListener("load", () => {
     if (!sec.reveal.started) {
       hasTyped = true;
       sec.reveal.started = true;
-      typeRevealText();
+      revealBio();
     }
   } else {
     animateName().then(() => {
@@ -1704,7 +2042,7 @@ window.addEventListener("load", () => {
         if (!hasTyped) {
           hasTyped = true;
           sec.reveal.started = true;
-          typeRevealText();
+          revealBio();
         }
       }
     });

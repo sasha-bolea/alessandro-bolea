@@ -47,26 +47,35 @@
   let stagnationCounter = 0;
   let lastHash = 0;
 
+  // Altezza reale del documento. Se body ha height esplicita (impostata dal
+  // codice che pinna il layout) quella &egrave; la fonte di verit&agrave;.
+  // Altrimenti il canvas va azzerato PRIMA di misurare: essendo absolute e alto
+  // quanto tutto il documento, contribuisce lui stesso allo scrollHeight, e
+  // misurarlo in posizione restituirebbe sempre il massimo gi&agrave; raggiunto
+  // rendendo invisibile qualunque accorciamento.
+  function measureDocH() {
+    const explicit = parseFloat(document.body.style.height);
+    if (explicit > 0) return explicit;
+    const prev = canvas.style.height;
+    canvas.style.height = "0px";
+    const docH = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      window.innerHeight
+    );
+    canvas.style.height = prev;
+    return docH;
+  }
+
+  let lastW = 0, lastH = 0;
   function resize() {
     dpr = Math.max(1, window.devicePixelRatio || 1);
     const w = window.innerWidth;
-    // Se body ha height esplicita (impostata da placeFinalBraceAndLine),
-    // usala come fonte di verit&agrave;: bypassa la misura di scrollHeight,
-    // che &egrave; chicken-and-egg col canvas (absolute, full-doc).
-    // Fallback: azzera canvas e misura scrollHeight per il primo load.
-    const explicit = parseFloat(document.body.style.height);
-    let docH;
-    if (explicit > 0) {
-      docH = explicit;
-    } else {
-      canvas.style.height = "0px";
-      docH = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight,
-        window.innerHeight
-      );
-    }
-    const h = docH;
+    const h = measureDocH();
+    // resize() rialloca e riseeda la griglia: senza questa guardia chiamarla da
+    // pi&ugrave; punti perturberebbe la simulazione a ogni giro.
+    if (w === lastW && h === lastH) return;
+    lastW = w; lastH = h;
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.width = w + "px";
@@ -93,7 +102,8 @@
       }
       // Seed delle aree appena aggiunte (nuove righe sotto / nuove colonne
       // a destra). Senza questo, su mobile il documento cresce dopo il primo
-      // resize() (gol.js gira in defer: prima del ghostRender → docH ≈ innerHeight)
+      // resize() (gol.js gira in defer: parte prima che il typing costruisca
+      // le sezioni, quindi al primo giro docH ≈ innerHeight)
       // e tutte le celle nelle nuove righe restano a 0 → gradient vuoto verso
       // il basso. La fascia superiore (preservata) resta densa.
       if (cols > oldCols || rows > oldRows) {
@@ -640,13 +650,13 @@
     resizeTimer = setTimeout(resize, 120);
   });
 
-  // Riadatta il canvas quando la pagina cresce (sezioni che si rivelano)
+  // Riadatta il canvas quando l'altezza del documento cambia, in pi&ugrave; o in
+  // meno. Deve passare da measureDocH(): misurando scrollHeight con il canvas
+  // ancora in posizione il valore non scendeva mai e gli accorciamenti erano
+  // invisibili, lasciando spazio vuoto in fondo alla pagina.
   let lastDocH = 0;
   setInterval(() => {
-    const docH = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight
-    );
+    const docH = measureDocH();
     if (Math.abs(docH - lastDocH) > 20) {
       lastDocH = docH;
       resize();
