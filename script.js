@@ -166,7 +166,10 @@ const iMieiProgetti = [
   <div class="gol-tech-row"><span class="tech-tag">Laravel 13</span><span class="tech-tag">PHP 8.3</span><span class="tech-tag">React</span><span class="tech-tag">Inertia</span><span class="tech-tag">MariaDB</span><span class="tech-tag">Docker</span><span class="tech-tag">Tailwind</span></div>
 </div>`,
         // Miniature: file in assets/screenshots/. Vuoto = nessuna striscia.
-        screenshots: [],
+        screenshots: [
+          { src: "assets/screenshots/tms-calendario.png",  alt: "Vista calendario con le ore inserite sulla settimana" },
+          { src: "assets/screenshots/tms-statistiche.png", alt: "Statistiche: andamento settimanale, ore per progetto e per cliente" },
+        ],
         tech: ["Laravel", "React", "MariaDB", "Docker"],
         status: "IN SVILUPPO",
     },
