@@ -42,6 +42,16 @@ Uso: `script.js` → `buildPercorso()`, `buildContatti()`.
 non cresce mai: `fitCardRow()` nasconde i tech tag e poi la descrizione.
 Uso: `script.js` → `buildProjects()`.
 
+### Striscia di screenshot
+`.proj-shots` dentro `.proj-card-expanded-inner`, con `.proj-shot` (un `<a>` che
+apre l'immagine in una tab nuova) e dentro l'`<img>`. Flex in riga con
+`overflow-x: auto`; **la miniatura ha altezza fissa** (`9em`) e l'immagine
+`height: 100%; width: auto`: così `inner.scrollHeight` in `setCardExpanded()` è
+corretto anche prima che le immagini siano caricate, e il pannello non si taglia.
+Dati: campo `screenshots: [{ src, alt }]` di `iMieiProgetti`; array vuoto =
+nessuna striscia. File in `assets/screenshots/`.
+Uso: `script.js` → `buildProjects()`, `style.css` → `.proj-shots`.
+
 ### Tech tag
 `.tech-tag`, bordo `--line-bar`, testo `--text-dim`, si illumina all'hover della
 card. Usato sia nelle card sia nei blocchi `dettagli`.

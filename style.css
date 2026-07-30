@@ -481,6 +481,26 @@ body.gutter-hover .fold-chevron,
   line-height: 1.55;
 }
 .project-card.is-expanded .proj-card-expanded-text { color: var(--text); opacity: 0.85; }
+/* Striscia di screenshot dentro la card aperta. Altezza fissa e scroll
+   orizzontale: l'altezza del pannello non dipende dal caricamento delle
+   immagini né dal loro formato. */
+.proj-shots {
+  display: flex;
+  gap: 0.5em;
+  overflow-x: auto;
+  margin-top: 0.9em;
+  padding-bottom: 0.3em;
+}
+.proj-shot {
+  flex: 0 0 auto;
+  height: 9em;
+  border: 1px solid var(--line-bar);
+  border-radius: 0.35em;
+  overflow: hidden;
+  display: block;
+}
+.proj-shot:hover { border-color: var(--text-dim); }
+.proj-shot img { height: 100%; width: auto; display: block; }
 /* Riga link (open / github) dentro la card aperta */
 .proj-card-links {
   display: flex;

@@ -149,6 +149,27 @@ const iMieiProgetti = [
         link: "https://royalarena.it",
         github: "https://github.com/sasha-bolea/clash-royale-api",
     },
+    {
+        nome: "ELAN42 Time Tracker",
+        desc: "TMS interno per il tracking ore e il controllo di gestione",
+        dettagli: `<div class="gol-desc">
+  <p class="gol-desc-intro">Time Management System interno di <span class="gol-hl">ELAN42</span>, nato per sostituire Clockify e abilitare il <span class="gol-hl">controllo di gestione</span>: analisi di redditività per singolo progetto. Replica le funzioni chiave di Clockify — tracking delle ore su progetti e task, distinzione <span class="gol-hl">fatturabile / non fatturabile</span>, reporting grafico — con i dati di riferimento (clienti, progetti, task) importati da <span class="gol-hl">Fatture in Cloud</span> e <span class="gol-hl">Asana</span>.</p>
+  <p class="gol-desc-section-title">// funzionalità</p>
+  <table class="gol-iface-table">
+    <tr><td class="gol-iface-key">inserimento ore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">calendario, manuale o cronometro — tutte scrivono sulla stessa tabella</td></tr>
+    <tr><td class="gol-iface-key">fatturabilità</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">ogni attività distingue ore fatturabili e non fatturabili</td></tr>
+    <tr><td class="gol-iface-key">reporting</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">grafici per progetto e cliente, tariffe e redditività</td></tr>
+    <tr><td class="gol-iface-key">asana</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">progetti e task sincronizzati, widget ore dentro il task</td></tr>
+    <tr><td class="gol-iface-key">sincronizzazione</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">cache read-only, upsert idempotente, sync schedulate</td></tr>
+  </table>
+  <p class="gol-desc-section-title">// tecnologie</p>
+  <div class="gol-tech-row"><span class="tech-tag">Laravel 13</span><span class="tech-tag">PHP 8.3</span><span class="tech-tag">React</span><span class="tech-tag">Inertia</span><span class="tech-tag">MariaDB</span><span class="tech-tag">Docker</span><span class="tech-tag">Tailwind</span></div>
+</div>`,
+        // Miniature: file in assets/screenshots/. Vuoto = nessuna striscia.
+        screenshots: [],
+        tech: ["Laravel", "React", "MariaDB", "Docker"],
+        status: "IN SVILUPPO",
+    },
 ];
 
 const contatti = {
@@ -940,10 +961,20 @@ function buildProjects() {
           </button>
         </div>
       </div>` : ``;
+    // Striscia di miniature. Ogni immagine è un link: il click apre lo
+    // screenshot in una tab nuova invece di richiudere la card (il gestore di
+    // click sulla card ignora <a>). L'altezza è fissa via CSS, così
+    // inner.scrollHeight in setCardExpanded è corretto anche prima che le
+    // immagini abbiano finito di caricare.
+    const shotsHtml = p.screenshots && p.screenshots.length ? `
+      <div class="proj-shots">${p.screenshots.map(s =>
+        `<a href="${s.src}" target="_blank" class="proj-shot"><img src="${s.src}" alt="${s.alt}" loading="lazy"></a>`
+      ).join("")}</div>` : ``;
     const expandedHtml = p.dettagli ? `
       <div class="proj-card-expanded">
         <div class="proj-card-expanded-inner">
           <div class="proj-card-expanded-text">${p.dettagli}</div>
+          ${shotsHtml}
           ${linkHtml ? `<div class="proj-card-links">${linkHtml}</div>` : ``}
         </div>
       </div>` : ``;
