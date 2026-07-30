@@ -51,6 +51,7 @@ const iMieiStrumenti = {
   runtime:   ["Node.js", "Express", "Docker"],
   database:  ["SQL"],
   tools:     ["Git", "GitHub", "VSCode"],
+  ai:        ["Claude Code", "MCP", "Gemini"],
 };
 
 const iMieiProgetti = [
@@ -747,19 +748,26 @@ async function revealTools() {
   startSection("projects");
 }
 
+/* Glifi disegnati per questo sito: rappresentano cosa fa lo strumento, non
+   che aspetto ha il suo logo. Nessun marchio di terzi è riprodotto — i nomi
+   dei prodotti restano dei rispettivi proprietari e compaiono solo come
+   etichetta scritta. Tutti monocromi in nero, quindi tutti `invert`. */
 const techIconMap = {
-  "Python":     { path: "assets/icons/python-original.svg" },
-  "Java":       { path: "assets/icons/java-original.svg" },
-  "JS":         { path: "assets/icons/javascript-original.svg" },
-  "HTML":       { path: "assets/icons/html5-original.svg" },
-  "CSS":        { path: "assets/icons/css3-original.svg" },
-  "Node.js":    { path: "assets/icons/nodejs-original.svg" },
-  "Express":    { path: "assets/icons/express-original.svg", invert: true },
-  "Docker":     { path: "assets/icons/docker-original.svg" },
-  "SQL":        { path: "assets/icons/mysql-original.svg" },
-  "Git":        { path: "assets/icons/git-original.svg" },
-  "GitHub":     { path: "assets/icons/github-original.svg", invert: true },
-  "VSCode":     { path: "assets/icons/vscode-original.svg" },
+  "Python":      { path: "assets/icons/python.svg",      invert: true },
+  "Java":        { path: "assets/icons/java.svg",        invert: true },
+  "JS":          { path: "assets/icons/js.svg",          invert: true },
+  "HTML":        { path: "assets/icons/html.svg",        invert: true },
+  "CSS":         { path: "assets/icons/css.svg",         invert: true },
+  "Node.js":     { path: "assets/icons/nodejs.svg",      invert: true },
+  "Express":     { path: "assets/icons/express.svg",     invert: true },
+  "Docker":      { path: "assets/icons/docker.svg",      invert: true },
+  "SQL":         { path: "assets/icons/sql.svg",         invert: true },
+  "Git":         { path: "assets/icons/git.svg",         invert: true },
+  "GitHub":      { path: "assets/icons/github.svg",      invert: true },
+  "VSCode":      { path: "assets/icons/vscode.svg",      invert: true },
+  "Claude Code": { path: "assets/icons/claude-code.svg", invert: true },
+  "MCP":         { path: "assets/icons/mcp.svg",         invert: true },
+  "Gemini":      { path: "assets/icons/gemini.svg",      invert: true },
 };
 
 function buildTools() {

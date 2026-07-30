@@ -366,7 +366,10 @@ body.gutter-hover .fold-chevron,
   height: 1.8em;
   display: block;
 }
-[data-theme="dark"] .tool-icon-card img[data-invert] { filter: invert(1) opacity(0.75); }
+/* I glifi sono disegnati in nero: il tema scuro li inverte in bianco. In
+   entrambi i temi la stessa opacità, così non pesano più delle etichette. */
+[data-theme="dark"]  .tool-icon-card img[data-invert] { filter: invert(1) opacity(0.75); }
+[data-theme="light"] .tool-icon-card img[data-invert] { filter: opacity(0.75); }
 
 @keyframes card-in {
   from { opacity: 0; transform: translateY(10px); }

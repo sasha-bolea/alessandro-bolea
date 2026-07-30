@@ -58,8 +58,23 @@ card. Usato sia nelle card sia nei blocchi `dettagli`.
 
 ### Card icona strumento
 `.tool-icon-card` in `.tools-icons-row`, dimensioni fisse `1.8em` per l'icona:
-nessun layout shift al caricamento delle SVG.
+nessun layout shift al caricamento delle SVG. La card ha altezza fissa
+`4.5em`: un'etichetta lunga va a capo su due righe e ci sta ancora (es.
+`Claude Code`).
 Uso: `script.js` → `buildTools()`.
+
+### Glifi degli strumenti
+Tutte le icone in `assets/icons/` sono **disegnate per questo sito**: nessun
+logo di terzi nel repo. Rappresentano *cosa fa* lo strumento, non che aspetto
+ha il suo marchio — i nomi dei prodotti compaiono solo come etichetta scritta
+(uso nominativo). Regole per aggiungerne uno:
+- viewBox `0 0 24 24`, tratto `stroke="#000000"`, `stroke-width="1.8"`,
+  `stroke-linecap`/`linejoin` `round`; i pieni usano `fill="#000000"`;
+- **sempre `invert: true`** nella mappa: il nero è la sorgente, il tema scuro
+  lo inverte in bianco. Le due regole `[data-theme=…] img[data-invert]` in
+  `style.css` applicano la stessa `opacity(0.75)` in entrambi i temi, così i
+  glifi non pesano più delle etichette.
+Uso: `script.js` → `techIconMap`, `style.css` → `.tool-icon-card img`.
 
 ### Maniglia di fold
 `.fold-handle` (un `<button>`) con dentro `.fold-chevron`. Sta in overlay nella
