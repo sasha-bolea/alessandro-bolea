@@ -9,13 +9,23 @@
   --cursor-color: #ffffff;
   --accent:       #4ec9b0;
 }
+/* I valori del tema chiaro NON sono il riflesso di quelli scuri: il nero su un
+   fondo caldo rende meno del bianco su fondo scuro, quindi con le stesse alpha
+   il giorno risultava più smorto della notte su ogni elemento in primo piano —
+   testo attenuato a 1,68 di contrasto contro 2,26, barre a 1,41 contro 2,03.
+   Al contrario le celle del Game of Life erano più marcate che di notte (1,42
+   contro 1,21) e rubavano attenzione al testo: qui vanno schiarite, non scurite.
+   Contrasti attuali: testo attenuato 2,35 · barre 2,07 · celle 1,20.
+   Toccando questi valori ricalcolare il rapporto, non andare a occhio. */
 [data-theme="light"] {
   --bg:           #f0ede7;
   --text:         #1a1a1a;
-  --text-dim:     rgba(0,0,0,0.22);
+  --text-dim:     rgba(0,0,0,0.34);
   --bg-glyph:     rgb(220,216,208);
-  --gol-cell:     rgb(205,200,192);
-  --line-bar:     rgba(0,0,0,0.15);
+  /* Colore delle celle vive fuori dalla focus mode. In focus mode lo scrive
+     `__gol.setCellColor(_focusCellColor())`, che va a nero pieno. */
+  --gol-cell:     rgb(222,217,209);
+  --line-bar:     rgba(0,0,0,0.30);
   --cursor-color: #1a1a1a;
 }
 
@@ -79,12 +89,13 @@ body.gol-focus-mode #theme-toggle {
 [data-theme="light"] #theme-toggle { color: rgba(0,0,0,0.6); }
 
 /* ── Interruttore di lingua ──
-   Stessa riga del theme toggle, subito a sinistra: entrambi absolute, e la
-   distanza da destra tiene conto della larghezza di "//Devs: Beware". */
+   Angolo opposto al theme toggle, stessa riga e stessi margini: i due comandi
+   della pagina stanno agli estremi invece di accalcarsi a destra, e la distanza
+   non dipende più dalla larghezza di "//Devs: Beware". */
 #lang-toggle {
   position: absolute;
   top: 1.4rem;
-  right: 13rem;
+  left: 2rem;
   font-family: "Hack", monospace;
   font-size: 1em;
   z-index: 100;

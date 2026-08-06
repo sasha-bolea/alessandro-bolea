@@ -46,6 +46,14 @@
   let lastStep = 0;
   let stagnationCounter = 0;
   let lastHash = 0;
+  /* La simulazione da sola si spegne, quindi tre meccanismi la tengono viva:
+     glider dai bordi, iniezione su stagnazione e seed della porzione nuova dopo
+     un resize. Vanno bene sullo sfondo, non quando la griglia è stata messa in
+     un certo stato di proposito: dopo "pulisci griglia" deve restare vuota, e
+     dopo la scelta di un pattern deve restare quel pattern e nient'altro.
+     Questo flag spegne tutti e tre insieme; solo "nuova generazione" li
+     riaccende, perché è l'unico comando che dichiara di volere vita nuova. */
+  let spawnAutomatico = true;
 
   // Altezza reale del documento. Se body ha height esplicita (impostata dal
   // codice che pinna il layout) quella &egrave; la fonte di verit&agrave;.
@@ -161,7 +169,7 @@
   // preservate dal grid precedente e non devono essere toccate.
   // Density 0.18 (matching seedInitial random). Mode "empty" rispettato.
   function seedNewArea(g, c, r, oldC, oldR, mode) {
-    if (mode === "empty") return;
+    if (mode === "empty" || !spawnAutomatico) return;
     for (let y = 0; y < r; y++) {
       for (let x = 0; x < c; x++) {
         const isNew = (y >= oldR) || (x >= oldC);
@@ -378,7 +386,7 @@
     age = nextAge;
 
     // Rileva stagnazione (stesso stato per N step)
-    if (tweaks.stagnationInjection && !document.body.classList.contains("gol-focus-mode")) {
+    if (spawnAutomatico && tweaks.stagnationInjection && !document.body.classList.contains("gol-focus-mode")) {
       const h = hashGrid(grid);
       if (h === lastHash) {
         stagnationCounter++;
@@ -532,7 +540,7 @@
     if (!tweaks.paused && t - lastStep >= Math.max(50, tweaks.speedMs)) {
       step();
       stepCount++;
-      if (stepCount % 3 === 0 && !document.body.classList.contains("gol-focus-mode")) injectEdgeGlider();
+      if (spawnAutomatico && stepCount % 3 === 0 && !document.body.classList.contains("gol-focus-mode")) injectEdgeGlider();
       lastStep = t;
     }
     if (tweaks.paused) lastStep = t;
@@ -610,15 +618,27 @@
       seedInitial(grid, cols, rows, mode || tweaks.seed);
       lastHash = hashGrid(grid);
       stagnationCounter = 0;
+      // L'unico comando che riaccende il ripopolamento automatico: chiedere una
+      // nuova generazione è chiedere una griglia viva.
+      spawnAutomatico = true;
       draw(true);
     },
     clear: () => {
       grid.fill(0);
       age.fill(0);
+      // Senza questo la griglia si ripopola da sola: glider dai bordi entro tre
+      // step, e celle nuove al primo ingrandimento della finestra.
+      spawnAutomatico = false;
       draw(true);
     },
     inject: () => injectRandomPattern(),
-    loadPattern: (name) => placePatternCentered(name),
+    loadPattern: (name) => {
+      // Il pattern scelto deve restare l'unica cosa sulla griglia: i glider dai
+      // bordi gli finirebbero addosso e l'iniezione su stagnazione lo
+      // sporcherebbe appena si stabilizza.
+      spawnAutomatico = false;
+      placePatternCentered(name);
+    },
     // Forza una ri-misura del canvas (es. dopo che il documento si rimpicciolisce
     // a fine typing in placeFinalBraceAndLine, l'interval da 800 ms non
     // scatta perché lo scrollHeight è "auto-bloccato" sull'altezza del canvas).

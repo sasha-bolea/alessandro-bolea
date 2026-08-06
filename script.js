@@ -115,19 +115,58 @@ const rnd   = (a, b) => Math.random() * (b - a) + a;
    un elemento si misura una volta sola, quando diventa quello in scrittura. */
 let _cursorEl = null;
 let _cursorBottom = Infinity;   // fondo dell'elemento in scrittura, coord. documento
+let _cursorTop = 0;             // suo inizio, per il cancello di fine pagina
 let _scrollY = 0;
 
 /* Dichiara qual è l'elemento che si sta scrivendo. el: elemento o null. */
 function setCursorEl(el) {
   _cursorEl = el || null;
-  _cursorBottom = el ? el.getBoundingClientRect().bottom + window.scrollY : Infinity;
+  const r = el ? el.getBoundingClientRect() : null;
+  _cursorBottom = r ? r.bottom + window.scrollY : Infinity;
+  _cursorTop    = r ? r.top    + window.scrollY : 0;
 }
 /* Rimisura il cursore corrente: serve dopo fold, resize e pin, gli unici casi
    in cui il layout si sposta sotto i piedi della scrittura. */
 function refreshCursorPos() { if (_cursorEl) setCursorEl(_cursorEl); }
 function skipNow() { return _cursorBottom < _scrollY; }
 
-const fast = (s, ms) => skipNow() ? Promise.resolve() : sleep(ms);
+/* ── Cancello di fine pagina ──
+   Specchio dello skip: quello genera senza animazione ciò che è già uscito in
+   alto, questo non genera affatto ciò che cadrebbe sotto il bordo basso. La
+   scrittura si fermа alla fine della pagina visibile e riprende allo scroll
+   successivo, così l'animazione accompagna la lettura invece di correre avanti.
+   Il confronto è sul TOP dell'elemento: si aspetta solo se non se ne vede
+   nemmeno l'inizio, quindi l'ultimo elemento visibile viene scritto per intero.
+   Ritorna true se l'elemento in scrittura è tutto sotto la piega. */
+function oltreLaPiega() { return _cursorTop > _scrollY + window.innerHeight; }
+
+// Resolver in attesa che il cursore rientri in pagina. Svegliati dallo scroll e
+// dal resize: sono i due soli modi in cui la piega si sposta.
+let _attesaRientro = [];
+function risvegliaScrittura() {
+  if (!_attesaRientro.length) return;
+  const attesa = _attesaRientro;
+  _attesaRientro = [];
+  attesa.forEach(r => r());
+}
+
+/* Sospende la scrittura finché l'elemento non rientra in pagina.
+   Il predicato si rivaluta a ogni risveglio: uno scroll che non basta rimette in
+   attesa invece di far ripartire la generazione fuori schermo. Lo skip apre il
+   cancello comunque, altrimenti scorrendo di colpo in fondo si resterebbe
+   appesi su un elemento che va solo riempito senza animazione.
+   s: voce di sec. Ritorna una Promise. */
+async function attendiRientro(s) {
+  while (oltreLaPiega() && !s.skip) {
+    await new Promise(r => _attesaRientro.push(r));
+  }
+}
+
+const fast = async (s, ms) => {
+  if (skipNow()) return;
+  await attendiRientro(s);
+  if (!skipNow()) await sleep(ms);
+};
 
 
 /* ── Typing: build (sincrono) + reveal (animato) ──
@@ -1715,6 +1754,9 @@ window.addEventListener("scroll", () => {
   // Unica sorgente di scrollY per skipNow: il predicato non deve leggere il
   // layout, viene interrogato a ogni carattere.
   _scrollY = window.scrollY;
+  // La piega si è spostata: se la scrittura era in attesa può riprendere. Va
+  // dopo _scrollY, che è il valore su cui il cancello si rivaluta.
+  risvegliaScrittura();
   const h1       = document.querySelector("h1");
   const fullName = document.getElementById("full-name");
   // Scroll nostro, fatto per seguire la scrittura del nome: non è l'utente che
@@ -1807,6 +1849,9 @@ window.addEventListener("resize", () => {
   document.querySelectorAll(".project-card").forEach(fitCardRow);
   snapBodyHeights();
   pinDocHeight();
+  // Una finestra più alta sposta la piega senza che si scrolli: senza questo la
+  // scrittura resterebbe in attesa di uno scroll che non serve più.
+  risvegliaScrittura();
 });
 
 // Il font monospace cambia larghezze e altezza riga: butta la cache e rimisura
