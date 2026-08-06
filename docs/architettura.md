@@ -95,9 +95,56 @@ if (span.closest(".is-folded")) {
 nel DOM perché `recomputeLineNumbers` gira decine di volte al secondo.
 L'annidamento viene gratis: `closest` risale a qualunque profondità.
 
+## 6. Bilinguismo
+
+`i18n.js` è caricato **prima** di `script.js` (entrambi `defer`, l'ordine dei tag
+comanda) e definisce tre costanti globali che `script.js` legge: `LANG`, `T`
+(contenuti della lingua attiva) e `U` (scorciatoia per `T.ui`, perché nei
+template literal `${U.golPausaPlay}` resta leggibile e `${T.ui.golPausaPlay}`
+no). Sono `const` al top level di uno script classico: non finiscono su `window`
+ma sono visibili agli script caricati dopo.
+
+`script.js` non sa nulla di lingue. I nomi che usava da sempre restano, legati
+in sei righe:
+
+```js
+const ilMieiProgetti = T.progetti;   // e percorso, strumenti, contatti
+```
+
+Si traduce anche ciò che sembra codice: i titoli finti (`const percorso = {` →
+`const path = {`) e le **chiavi** delle categorie strumenti, che diventano i
+commenti `// linguaggi` → `// languages`.
+
+Il cambio lingua **ricarica** la pagina. È voluto: la pagina si scrive da sola
+con un motore di rivelazione a stati, e sostituire i testi a metà animazione
+vorrebbe dire rifarne il percorso. Lo scroll è già in `sessionStorage`, quindi si
+riparte dallo stesso punto con il testo già scritto — il ramo `wasScrolled`
+riempie tutto istantaneamente.
+
+Precedenza della lingua: scelta manuale in `localStorage` → `navigator.language`
+→ italiano. La scelta manuale è definitiva e non viene mai riscritta dal
+browser.
+
+**Regola vincolante**: ogni chiave esiste in entrambi i rami. Un `en` incompleto
+non degrada in italiano, dà `undefined` a schermo. Il controllo è un confronto
+delle chiavi fra `CONTENUTI.it` e `CONTENUTI.en`.
+
 ## Convenzioni
 
 - **Cache busting**: dopo ogni modifica alzare `?v=` in `index.html`
-  (`style.css`, `script.js`, `gol.js` hanno contatori separati).
+  (`style.css`, `script.js`, `gol.js`, `i18n.js` hanno contatori separati).
+- **Misure di altezza sempre frazionarie**: `getBoundingClientRect().height`,
+  mai `offsetHeight`, dove il risultato viene diviso per un'interlinea.
+  `offsetHeight` arrotonda all'intero e su cinquanta righe l'errore accumulato
+  sfiora una riga.
+- **`min-height` calcolato si arrotonda per eccesso** (`Math.ceil`): per difetto
+  resta sotto l'altezza naturale, non morde, e il blocco tiene un'altezza che i
+  numeri di riga non contano.
+- **Chi imposta `overflow-x` dichiari anche `overflow-y`**: per specifica, se un
+  asse è diverso da `visible` l'altro passa ad `auto`.
+- **Verificare a tab in primo piano**: Chrome throttla `setTimeout` e `rAF`
+  nelle tab in background, quindi le animazioni sembrano bloccate e si misurano
+  stati a metà. Un'animazione ferma **a metà carattere** è throttling, non un
+  bug.
 - Ogni sezione nuova va aggiunta a mano a `BLOCK_CLOSE_MAP`, `syncLnWidth`,
   `SECTION_KEY_BY_ID`, `sec`/`secOrder` e a `buildAll`.

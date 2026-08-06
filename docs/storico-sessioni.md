@@ -4,6 +4,91 @@ Archivio append-only. Il più recente in cima.
 
 ---
 
+## 2026-08-06 09:15 — Card cb, bilinguismo IT/EN, titolo editabile domato
+
+Sessione a raffica: una card nuova, poi otto correzioni nate guardando il
+risultato a schermo, poi il pezzo grosso, l'inglese.
+
+### Come è andata
+
+Aperta con un allineamento al remote che ha evitato un guaio: le quattro
+modifiche non committate in working tree erano un **rollback stale**, non lavoro
+nuovo. `script.js` puntava a `assets/icons/*-original.svg`, file che il commit
+`b06ffaa` aveva già sostituito — committarle avrebbe rotto 12 icone in
+produzione. Anche i `?v=` andavano indietro (27→26, 39→38). Scartate, pushati i
+tre commit sani.
+
+Poi la **card del progetto cb** (`claude-code-branching`, CLI pubblicata su
+npm), costruita riusando i pattern esistenti dei dettagli: zero CSS nuovo
+tranne il blocco dell'albero.
+
+Da lì una sequenza di correzioni tutte partite da uno screenshot: l'albero dei
+rami con i glifi che sfondavano la griglia, la mini scrollbar, l'hover dei link,
+il numero della graffa a tre cifre, l'interlinea disuguale, il corpo che si
+sovrapponeva al titolo, il fondo pagina irraggiungibile. Sette bug, tutti in
+`bug-risolti.md`.
+
+Due li ho causati io e corretti nella stessa sessione: lo sfalsamento del terzo
+ramo dell'albero (l'avevo introdotto su richiesta, ma si legge come errore) e il
+guard `indentDone` su `pinDocHeight`, che bloccava il ri-fissaggio dell'altezza
+proprio durante la scrittura del nome.
+
+**Un falso allarme da ricordare**: avevo riportato come bug preesistente dei
+`data-fixed-rows` residui e tre sezioni ferme a `done=false`. Non era vero. Era
+Chrome che **throttla i timer nelle tab in background**, con `setTimeout` a una
+volta al secondo o meno: fotografavo stati a metà animazione. La prova è che il
+github era fermo a metà carattere (`"github.com/sasha-bo`) — un blocco vero non
+si ferma a metà stringa. Confermato identico su HEAD con `git stash`.
+
+Chiusa con il **bilinguismo**. Scelte concordate: ricarica invece di scambio a
+caldo, interruttore `IT | EN`, default dalla lingua del browser.
+
+### Cambiamenti al codice
+
+**Card progetto cb**
+- `script.js` → voce in `iMieiProgetti`: nome, desc, 5 righe di funzionalità,
+  albero dei rami, tech, `status: LIVE`, link npm e github
+- `script.js` → `buildProjects()`: campo opzionale `linkLabel` (default `open`),
+  perché la label era cablata per tutti i progetti e Royale Arena è un sito, non
+  un pacchetto
+- `style.css` → `.cb-tree`, `.cb-on`, `.cb-cur`
+
+**Albero dei rami**
+- glifi `⬤ ◯` → `● ○`; `line-height: 1` vincolante; `overflow-y: hidden`
+  esplicito; colori `#ff8c66` / `#8c8c8c` presi da `cb/src/stile.js`
+
+**Numeri di riga**
+- `singleLineHeight()` → `getBoundingClientRect().height` (misura frazionaria)
+- `lineRows()` caso `dynamic-block` → `Math.ceil` al posto di `Math.round`
+- `lineRows()` caso `dynamic` e `updateNameLn()` → rect frazionario anche lì
+
+**Graffa finale**
+- `script.js` → `fitBraceLn()`, chiamata da `repositionBrace()`
+
+**Titolo editabile**
+- `updateRevealPos()` → `Math.max(_h1ReservedH, h1.offsetHeight)`
+- `updateNameLn()` → `pinDocHeight()` quando cambia il numero di righe
+- `keydown` → guardia `(!animFinished || hasTyped)`: si scrive solo nella
+  finestra fra fine animazione del nome e partenza del corpo
+- gestore di scroll → `deactivateCursor(fullName)` quando il corpo parte
+- `keepNameCaretVisible()` + `nameScrollTarget`: la pagina segue il punto di
+  scrittura, e il gestore di scroll riconosce il proprio scroll dalla
+  destinazione invece di usare un timer
+
+**Interfaccia**
+- `style.css` → `.proj-open-link:hover` al posto di
+  `.project-card:hover .proj-open-link`
+- `style.css` → `#lang-toggle`, `.lang-opt`, `.lang-sep`
+
+**Bilinguismo**
+- `i18n.js` **nuovo** (507 righe): `LANG`, `T`, `U`, `cambiaLingua()`, contenuti
+  completi in italiano e inglese
+- `script.js` → −175 righe di dati, sostituite da sei binding su `T`; bio,
+  titoli di sezione, tooltip, aria-label, slider GoL, easter egg,
+  `GOL_PATTERN_INFO` e label del theme toggle parametrizzati
+- `index.html` → `#lang-toggle`, `i18n.js` prima di `script.js`
+- `script.js` → `document.documentElement.setAttribute("lang", T.htmlLang)`
+
 ## 2026-07-29 17:52 — Percorso, code folding, altezza fissa, skip per elemento
 
 Sessione lunga, quattro blocchi di lavoro più una review e un incidente.

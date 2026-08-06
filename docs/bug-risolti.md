@@ -4,6 +4,109 @@ Registro append-only. Il più recente in cima.
 
 ---
 
+## 2026-08-06 — Interlinea disuguale fra i numeri di riga ai confini di blocco
+
+**Sintomo** Fra due numeri consecutivi comparivano salti: 23,4px al confine del
+blocco progetti, 11px su quello degli strumenti. Visibile come una riga più
+distanziata delle altre nella gutter.
+**Causa** Due difetti che si sommavano. `singleLineHeight()` misurava con
+`offsetHeight`, **arrotondato all'intero**: restituiva `21` dove l'interlinea
+reale è `20.67`, e su cinquanta righe l'errore accumulato sfiora una riga
+intera. In più lo snap dei body usava `Math.round`: per i progetti
+`round(1015/20.67) = 49` dà `min-height: 1013px`, ma `min-height` è un
+**minimo** e sotto l'altezza naturale non morde — il blocco restava alto 1015px
+mentre i numeri ne contavano 1013.
+**Fix** `getBoundingClientRect().height` al posto di `offsetHeight` (misura
+frazionaria) e `Math.ceil` al posto di `Math.round` nello snap, così il minimo
+calcolato sta sempre sopra l'altezza naturale e vincola davvero. Allineati anche
+gli altri due punti che dividevano un `offsetHeight` intero per lo `slh` ora
+frazionario (`lineRows` caso `dynamic`, `updateNameLn`).
+**Verifica** 86 numeri renderizzati, delta uniforme 20.6/20.7px e un solo salto
+voluto (441px, nome → bio).
+**File** `script.js`
+
+## 2026-08-06 — Il corpo del sito si sovrapponeva al titolo con un nome lungo
+
+**Sintomo** Scrivendo un nome lungo nell'h1 editabile, il testo del titolo
+finiva sopra il corpo della pagina.
+**Causa** `updateRevealPos()` calcolava la posizione del corpo con
+`(_h1ReservedH || h1.offsetHeight)`, cioè **solo** la riserva misurata una volta
+da `measureH1Height()` sui due testi dell'animazione. La riserva serve a tenere
+fermo il margine mentre il nome si digita, ma è un `min-height`, non un tetto:
+un nome più lungo faceva crescere l'h1 oltre, e il margine del corpo restava
+fermo.
+**Fix** `Math.max(_h1ReservedH, h1.offsetHeight)` — la riserva diventa un
+pavimento. Fino a 40 caratteri il comportamento è identico a prima (vince la
+riserva); oltre, il gap resta costante invece di andare in negativo (−119px a 80
+caratteri, −1463px a 300 con la formula vecchia).
+**File** `script.js`
+
+## 2026-08-06 — Fondo pagina irraggiungibile dopo aver allungato il titolo
+
+**Sintomo** Scrivendo nel titolo non si riusciva più a scorrere fino in fondo,
+finché la generazione del testo non era completa.
+**Causa** Crescendo l'h1 tutto il contenuto sotto scende, ma l'altezza del
+documento è **fissata** in px da `repositionBrace` e `__maxScroll` ne discende:
+restavano al valore vecchio. Con 220 caratteri il fondo reale arrivava a 3403px
+mentre si poteva scorrere solo a 2351 — 1052px fuori portata, sbloccati solo a
+fine generazione da `placeFinalBraceAndLine`.
+**Causa a monte** Un guard `if (window.indentDone)` che avevo messo sulla
+chiamata a `pinDocHeight()` in `updateNameLn`, nel timore di disturbare il tween
+della barra: durante la scrittura del nome `indentDone` è `false`, quindi il
+ri-fissaggio non scattava mai.
+**Fix** Rimosso il guard. L'unica parte sensibile al tween è
+`indentLine.style.height`, e `repositionBrace` la protegge già da sé con
+`indentDone`; il resto è sicuro in qualunque momento, tant'è che `pinDocHeight()`
+gira già al load.
+**File** `script.js`
+
+## 2026-08-06 — Mini scrollbar dentro la card del progetto cb
+
+**Sintomo** Una scrollbar in miniatura compariva nel blocco dell'albero dei rami.
+**Causa** Per specifica CSS, se un asse di `overflow` è diverso da `visible`
+l'altro passa da `visible` ad `auto`. Avendo scritto solo `overflow-x: auto`,
+`overflow-y` risultava `auto` senza averlo dichiarato, e con `line-height: 1` il
+contenuto sfora di 1px: quel pixel bastava.
+**Fix** `overflow-y: hidden` esplicito accanto a `overflow-x`. Orizzontalmente
+non sforava affatto (956 = 956), quindi la scrollbar visibile era solo quella
+verticale.
+**File** `style.css`
+
+## 2026-08-06 — Griglia dell'albero cb sfalsata a ogni nodo
+
+**Sintomo** Nell'albero dei rami i nodi non stavano in colonna e le giunzioni
+non combaciavano.
+**Causa** `⬤` (U+2B24) è largo 12,97px contro una cella monospace di 9,06px:
+Hack non ha quel carattere e il fallback lo rende 1,43 celle. Ogni nodo
+spostava la riga.
+**Fix** Sostituiti `⬤ ◯` con `● ○` (U+25CF / U+25CB), il set di ripiego previsto
+da cb stesso in `src/vista.js:21` — misurati tutti 9,06px come `━ ┳ ┗`. In più
+`line-height: 1`, perché con interlinea maggiore i tratti verticali di `┳` e `┗`
+non arrivano a toccarsi.
+**Verifica** Le tre righe misurano 28,98 / 24,98 / 29,98 celle contro 29 / 25 /
+30 caratteri.
+**File** `script.js`, `style.css`
+
+## 2026-08-06 — I link della card si illuminavano tutti insieme
+
+**Sintomo** Passando il mouse sulla card, `npm` e `github` si accendevano
+entrambi e non si capiva quale si stesse per cliccare.
+**Causa** La regola era `.project-card:hover .proj-open-link`, legata all'hover
+della card e non del link.
+**Fix** `.proj-open-link:hover`.
+**File** `style.css`
+
+## 2026-08-06 — Numero di riga della graffa fuori dalla colonna a tre cifre
+
+**Sintomo** Superate le 99 righe, il numero finale (scritto a 7.5vw come la
+graffa) finiva sotto la parentesi.
+**Causa** Lo spazio disponibile è la colonna dei numeri più il suo margine,
+133px a 1280px di viewport: due cifre stanno (115,6px), tre no (173,4px).
+**Fix** `fitBraceLn()` riduce il font solo quando il numero sfora, e blocca
+`line-height` all'altezza del font pieno così le cifre restano centrate dove
+stavano invece di risalire sopra la graffa. A 1-2 cifre non tocca nulla.
+**File** `script.js`
+
 ## 2026-07-29 — Snap al multiplo di riga rimandato a fine scrittura
 
 **Sintomo** La pagina è più corta di circa mezzo centimetro durante la

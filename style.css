@@ -77,6 +77,41 @@ body.gol-focus-mode #theme-toggle {
 #theme-toggle, #theme-toggle * { cursor: pointer; }
 #theme-toggle:hover { color: var(--text); }
 [data-theme="light"] #theme-toggle { color: rgba(0,0,0,0.6); }
+
+/* ── Interruttore di lingua ──
+   Stessa riga del theme toggle, subito a sinistra: entrambi absolute, e la
+   distanza da destra tiene conto della larghezza di "//Devs: Beware". */
+#lang-toggle {
+  position: absolute;
+  top: 1.4rem;
+  right: 13rem;
+  font-family: "Hack", monospace;
+  font-size: 1em;
+  z-index: 100;
+  user-select: none;
+}
+body.gol-focus-mode #lang-toggle { position: fixed; }
+.lang-opt {
+  /* I <button> non ereditano il font: senza questo prendono l'Arial 13.3px
+     dello user agent e la riga si disallinea dal theme toggle. */
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+.lang-opt:hover { color: var(--text); }
+/* La lingua attiva è quella a piena luminosità: la scelta si legge senza
+   bisogno di un bordo o di uno sfondo in più. */
+.lang-opt.is-active { color: var(--text); }
+.lang-sep {
+  color: var(--text-dim);
+  margin: 0 0.4em;
+  opacity: 0.5;
+}
+[data-theme="light"] .lang-opt:not(.is-active) { color: rgba(0,0,0,0.6); }
 #theme-dot {
   display: inline-block;
   width: 7px;
@@ -601,7 +636,10 @@ body.gutter-hover .fold-chevron,
   transition: color 0.2s;
   margin-top: 0.3em;
 }
-.project-card:hover .proj-open-link { color: var(--text); }
+/* Solo il link sotto il puntatore si illumina: l'hover della card lascia gli
+   altri a riposo, altrimenti "npm" e "github" si accendono insieme e non si
+   capisce quale si sta per cliccare. */
+.proj-open-link:hover { color: var(--text); }
 .proj-soon { display: block; width: 100%; text-align: right; color: var(--text-dim); font-size: 1em; opacity: 0.4; margin-top: 0.3em; }
 
 /* ── Contatti: link ── */
@@ -934,6 +972,30 @@ body.gutter-hover .fold-chevron,
 .gol-iface-sep { padding-right: 0.6em; opacity: 0.55; }
 .gol-iface-val { opacity: 0.75; }
 .gol-iface-hint { font-size: 0.78em; opacity: 0.55; margin: 0; }
+/* Albero dei rami di cb. I due colori sono quelli veri della CLI (src/stile.js
+   del progetto): arancione del marchio Claude portato a luminosità massima per
+   il percorso dal cursore alla radice, grigio per i rami in disparte. Non
+   diventano token del sito, valgono solo qui. */
+.cb-tree {
+  font-family: "Hack", monospace;
+  font-size: 0.88em;
+  /* Deve restare 1: i tratti verticali di ┳ e ┗ arrivano al bordo della cella,
+     e qualunque interlinea in più li stacca lasciando le giunzioni spezzate. */
+  line-height: 1;
+  margin: 0 0 0.7em;
+  /* Lo scroll orizzontale serve solo agli schermi troppo stretti per 30 celle.
+     overflow-y va spento a mano: impostare overflow-x diverso da visible porta
+     l'altro asse ad auto, e con line-height 1 il contenuto sfora di 1px — mezza
+     riga di scrollbar dentro la card. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: #8c8c8c;
+}
+.cb-on  { color: #ff8c66; }
+.cb-cur { font-weight: 700; }
+/* I nodi sono ● U+25CF e ○ U+25CB, non i ⬤ ◯ della CLI: Hack non ha U+2B24 e
+   il fallback lo rende largo 1.43 celle, sfondando la griglia. Sono i glifi di
+   ripiego previsti da cb stesso (src/vista.js). */
 
 /* ── GoL pattern picker ── */
 .gol-pattern-wrap {

@@ -25,6 +25,8 @@ Tutto alla root, niente `src/`:
 
 - `index.html` — markup, gli shell delle sezioni con `data-rows`/`data-source`
 - `style.css` — tema, layout, design system
+- `i18n.js` — **tutti i contenuti**, italiano e inglese. Caricato prima di
+  `script.js`, espone `LANG`, `T`, `U`, `cambiaLingua()`
 - `script.js` — typing, numeri di riga, geometria, folding, skip
 - `gol.js` — Game of Life a tutto documento
 - `docs/` — vedi sezione 7
@@ -37,9 +39,14 @@ node --check script.js     # controllo di sintassi (non cattura errori a runtime
 ```
 
 **Dopo ogni modifica alzare il `?v=` in `index.html`** — `style.css`,
-`script.js` e `gol.js` hanno contatori separati — e ricaricare con
+`script.js`, `gol.js` e `i18n.js` hanno contatori separati — e ricaricare con
 Ctrl+Shift+R. Senza, il browser serve i file vecchi e sembra che il fix non
 funzioni.
+
+**Verificare con la tab del browser in primo piano.** Chrome throttla
+`setTimeout` e `requestAnimationFrame` nelle tab in background: le animazioni
+sembrano bloccate e si finisce a misurare stati a metà. Un'animazione ferma *a
+metà carattere* è throttling, non un bug.
 
 ## 6. Convenzioni
 

@@ -33,154 +33,12 @@ const originalSurname = "bolea";
 const originalName    = "Alessandro(){";
 const newName         = "Sasha(){";
 
-// Chiavi = periodi, l'ordine di scrittura è l'ordine di visualizzazione.
-// Il valore può essere una stringa o { display, href } per rendere la riga un link.
-const ilMioPercorso = {
-  "2025 — in corso": {
-    display: 'ITS Digital Academy "Mario Volpato", Web Developer Full Stack',
-    href: "https://itsdigitalacademy.com/corsi/web-developer-full-stack/"
-  },
-  "2026 — in corso": {
-    display: "Stage, ELAN42 digital agency",
-    href: "https://elan42.com/"
-  },
-};
-
-const iMieiStrumenti = {
-  linguaggi: ["Python", "Java", "JS", "HTML", "CSS"],
-  runtime:   ["Node.js", "Express", "Docker"],
-  database:  ["SQL"],
-  tools:     ["Git", "GitHub", "VSCode"],
-  ai:        ["Claude Code", "MCP", "Gemini"],
-};
-
-const iMieiProgetti = [
-    {
-        nome: "Game of Life",
-        desc: "Sfondo interattivo del sito",
-        dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">Creato dal matematico <span class="gol-hl">John Horton Conway</span> nel <span class="gol-hl">1970</span>, il Game of Life è un automa cellulare che simula l'evoluzione di una popolazione su una griglia. Non è un gioco nel senso tradizionale — non ci sono giocatori né obiettivi — ma una simulazione che si svolge da sola. Ogni cella può essere viva ■ o morta □ e, in base allo stato delle celle circostanti (dette "vicini"), il suo stato cambierà alla generazione successiva — dimostrando come comportamenti <span class="gol-hl">complessi</span> possano <span class="gol-hl">emergere</span> da poche semplici regole:</p>
-  <p class="gol-desc-section-title">// regole</p>
-  <div class="gol-rules-row">
-    <div class="gol-rule">
-      <div class="gol-rule-icon">
-        <div class="gol-rule-grid">
-          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
-          <b class="gi d"></b><b class="gi a c"></b><b class="gi d"></b>
-          <b class="gi d"></b><b class="gi d"></b><b class="gi a"></b>
-        </div>
-        <span class="gol-rule-arrow">→</span>
-        <b class="gi r d"></b>
-      </div>
-      <span class="gol-rule-label">Una cella viva con meno di 2 vicini vivi → muore (sottopopolazione)</span>
-    </div>
-    <div class="gol-rule">
-      <div class="gol-rule-icon">
-        <div class="gol-rule-grid">
-          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
-          <b class="gi d"></b><b class="gi a c"></b><b class="gi d"></b>
-          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
-        </div>
-        <span class="gol-rule-arrow">→</span>
-        <b class="gi r a"></b>
-      </div>
-      <span class="gol-rule-label">Una cella viva con 2 o 3 vicini vivi → sopravvive</span>
-    </div>
-    <div class="gol-rule">
-      <div class="gol-rule-icon">
-        <div class="gol-rule-grid">
-          <b class="gi a"></b><b class="gi a"></b><b class="gi a"></b>
-          <b class="gi a"></b><b class="gi a c"></b><b class="gi d"></b>
-          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
-        </div>
-        <span class="gol-rule-arrow">→</span>
-        <b class="gi r d"></b>
-      </div>
-      <span class="gol-rule-label">Una cella viva con più di 3 vicini vivi → muore (sovrappopolazione)</span>
-    </div>
-    <div class="gol-rule">
-      <div class="gol-rule-icon">
-        <div class="gol-rule-grid">
-          <b class="gi d"></b><b class="gi a"></b><b class="gi d"></b>
-          <b class="gi a"></b><b class="gi d c"></b><b class="gi a"></b>
-          <b class="gi d"></b><b class="gi d"></b><b class="gi d"></b>
-        </div>
-        <span class="gol-rule-arrow">→</span>
-        <b class="gi r a"></b>
-      </div>
-      <span class="gol-rule-label">Una cella morta con esattamente 3 vicini vivi → nasce</span>
-    </div>
-  </div>
-  <p class="gol-desc-section-title">// tecnologie</p>
-  <div class="gol-tech-row"><span class="tech-tag">JS</span><span class="tech-tag">Canvas 2D</span><span class="tech-tag">requestAnimationFrame</span></div>
-  <p class="gol-desc-section-title">// interfaccia</p>
-  <table class="gol-iface-table">
-    <tr><td class="gol-iface-key">puntatore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">navigazione, nessun disegno</td></tr>
-    <tr><td class="gol-iface-key">disegna</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click / drag aggiunge cellule</td></tr>
-    <tr><td class="gol-iface-key">glider</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">click piazza un glider casuale</td></tr>
-    <tr><td class="gol-iface-key">pattern</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">piazza strutture predefinite</td></tr>
-    <tr><td class="gol-iface-key">modalità focus</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">schermo intero</td></tr>
-  </table>
-  <p class="gol-iface-hint">play/pause · clear · reseed · velocità</p>
-</div>`,
-        tech: ["JS"],
-        status: "LIVE",
-        link: "#",
-        isGol: true,
-    },
-    {
-        nome: "Royale Arena",
-        desc: "Piattaforma per tornei e statistiche tramite Clash Royale API",
-        dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">PWA per clan di <span class="gol-hl">Clash Royale</span> progettata per essere usata nel modo più semplice possibile — nessun account, nessuna registrazione. Un codice condiviso è l'unico gate d'accesso. Per avviare un torneo basta <span class="gol-hl">selezionare i giocatori e premere start</span>: l'app recupera automaticamente le battaglie recenti tramite l'<span class="gol-hl">API ufficiale</span>, filtra solo quelle valide per il torneo in corso e aggiorna il bracket senza nessun intervento manuale.</p>
-  <p class="gol-desc-section-title">// funzionalità</p>
-  <table class="gol-iface-table">
-    <tr><td class="gol-iface-key">clan</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">creazione via codice condiviso, nessuna registrazione</td></tr>
-    <tr><td class="gol-iface-key">tornei</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">bracket automatico, partite collegate alle battaglie reali</td></tr>
-    <tr><td class="gol-iface-key">classifiche</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">statistiche per giocatore aggiornate via polling</td></tr>
-    <tr><td class="gol-iface-key">manutenzione</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">pg_cron invalida tornei inattivi ogni 30 min, pulisce clan vuoti ogni notte</td></tr>
-  </table>
-  <p class="gol-desc-section-title">// sicurezza</p>
-  <p class="gol-iface-hint">modello flat — niente auth, niente token. codice clan = unico gate. isolamento dati garantito, attrito utente zero.</p>
-  <p class="gol-desc-section-title">// tecnologie</p>
-  <div class="gol-tech-row"><span class="tech-tag">Nuxt 4</span><span class="tech-tag">Vue 3</span><span class="tech-tag">Supabase</span><span class="tech-tag">PostgreSQL</span><span class="tech-tag">pg_cron</span><span class="tech-tag">PWA</span></div>
-</div>`,
-        tech: ["Nuxt 4", "Vue 3", "Supabase", "PWA"],
-        status: "LIVE",
-        link: "https://royalarena.it",
-        github: "https://github.com/sasha-bolea/clash-royale-api",
-    },
-    {
-        nome: "ELAN42 Time Tracker",
-        desc: "TMS interno per il tracking ore e il controllo di gestione",
-        dettagli: `<div class="gol-desc">
-  <p class="gol-desc-intro">Time Management System interno di <span class="gol-hl">ELAN42</span>, nato per sostituire Clockify e abilitare il <span class="gol-hl">controllo di gestione</span>: analisi di redditività per singolo progetto. Replica le funzioni chiave di Clockify — tracking delle ore su progetti e task, distinzione <span class="gol-hl">fatturabile / non fatturabile</span>, reporting grafico — con i dati di riferimento (clienti, progetti, task) importati da <span class="gol-hl">Fatture in Cloud</span> e <span class="gol-hl">Asana</span>.</p>
-  <p class="gol-desc-section-title">// funzionalità</p>
-  <table class="gol-iface-table">
-    <tr><td class="gol-iface-key">inserimento ore</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">calendario, manuale o cronometro — tutte scrivono sulla stessa tabella</td></tr>
-    <tr><td class="gol-iface-key">fatturabilità</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">ogni attività distingue ore fatturabili e non fatturabili</td></tr>
-    <tr><td class="gol-iface-key">reporting</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">grafici per progetto e cliente, tariffe e redditività</td></tr>
-    <tr><td class="gol-iface-key">asana</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">progetti e task sincronizzati, widget ore dentro il task</td></tr>
-    <tr><td class="gol-iface-key">sincronizzazione</td><td class="gol-iface-sep">→</td><td class="gol-iface-val">cache read-only, upsert idempotente, sync schedulate</td></tr>
-  </table>
-  <p class="gol-desc-section-title">// tecnologie</p>
-  <div class="gol-tech-row"><span class="tech-tag">Laravel 13</span><span class="tech-tag">PHP 8.3</span><span class="tech-tag">React</span><span class="tech-tag">Inertia</span><span class="tech-tag">MariaDB</span><span class="tech-tag">Docker</span><span class="tech-tag">Tailwind</span></div>
-</div>`,
-        // Miniature: file in assets/screenshots/. Vuoto = nessuna striscia.
-        screenshots: [
-          { src: "assets/screenshots/tms-calendario.png",  alt: "Vista calendario con le ore inserite sulla settimana" },
-          { src: "assets/screenshots/tms-statistiche.png", alt: "Statistiche: andamento settimanale, ore per progetto e per cliente" },
-        ],
-        tech: ["Laravel", "React", "MariaDB", "Docker"],
-        status: "IN SVILUPPO",
-    },
-];
-
-const contatti = {
-  email:    "sashabol3a@gmail.com",
-  github:   "github.com/sasha-bolea",
-  linkedin: { display: "linkedin.com/in/alessandro-bolea", href: "https://www.linkedin.com/in/alessandro-bolea-651393264/" }
-};
+// I contenuti stanno in i18n.js, uno per lingua. Qui si legano solo i nomi che
+// il resto del file usa da sempre, così build/reveal non sanno nulla di lingue.
+const ilMioPercorso  = T.percorso;
+const iMieiStrumenti = T.strumenti;
+const iMieiProgetti  = T.progetti;
+const contatti       = T.contatti;
 
 /* ── DOM refs ── */
 const surnameEl      = document.getElementById("surname");
@@ -197,6 +55,10 @@ let skipNameAnim     = false;
 let animFinished     = false;
 let hasTyped         = false;
 let currentEditable  = null;
+// Destinazione dell'ultimo scroll fatto da noi per seguire la scrittura del
+// nome. Il gestore di scroll la usa come firma per distinguerlo da uno scroll
+// dell'utente, che invece deve far partire il corpo. -1 = nessuno in attesa.
+let nameScrollTarget = -1;
 
 /* ── Section skip/auto-advance state ── */
 const sec = {
@@ -350,6 +212,9 @@ function syncLnWidth() {
    la richiede a ogni carattere digitato e a ogni frame durante i pump, quindi
    il risultato è in cache per elemento. Dipende solo dal font-size, perciò la
    cache va invalidata solo su resize e a font caricato (clearLineHCache()).
+   La misura è frazionaria: offsetHeight arrotonda all'intero e su un'interlinea
+   di 20.67px restituirebbe 21, un errore che su cinquanta righe diventa quasi
+   una riga intera di scarto fra i numeri e il contenuto.
    ref: elemento contenitore. Ritorna l'altezza in px. */
 let _lineHCache = new WeakMap();
 function singleLineHeight(ref) {
@@ -359,7 +224,7 @@ function singleLineHeight(ref) {
   const t = document.createElement("span");
   t.textContent = "X"; t.style.visibility = "hidden"; t.style.position = "absolute";
   el.appendChild(t);
-  const h = t.offsetHeight;
+  const h = t.getBoundingClientRect().height;
   t.remove();
   if (h) _lineHCache.set(el, h);
   return h;
@@ -399,7 +264,12 @@ function measureH1Height() {
 function updateRevealPos() {
   const slh      = singleLineHeight(document.getElementById("full-name"));
   const h1Top    = window.innerHeight * 0.2;
-  const h1Bottom = h1Top + (_h1ReservedH || document.querySelector("h1").offsetHeight);
+  // La riserva è un pavimento, non un tetto: serve a tenere fermo il margine
+  // mentre il nome si digita (i prefissi sono sempre più bassi del testo pieno,
+  // quindi vince la riserva), ma il nome è editabile e un testo più lungo dei
+  // due dell'animazione fa crescere l'h1 oltre la riserva. Prendendo solo la
+  // riserva il corpo resterebbe dov'era e il titolo gli finirebbe sopra.
+  const h1Bottom = h1Top + Math.max(_h1ReservedH, document.querySelector("h1").offsetHeight);
   revealSection.style.marginTop = h1Bottom > window.innerHeight
     ? (h1Bottom + slh) + "px"
     : "100vh";
@@ -484,7 +354,7 @@ function lineRows(span) {
     case "dynamic": {
       const slh = singleLineHeight(source) || 0;
       if (!slh) return 1;
-      return Math.max(1, Math.round(source.offsetHeight / slh));
+      return Math.max(1, Math.round(source.getBoundingClientRect().height / slh));
     }
     case "dynamic-block": {
       if (source.offsetHeight === 0) {
@@ -495,8 +365,12 @@ function lineRows(span) {
       if (!slh) return 0;
       // Snap altezza body a multiplo esatto di lineHeight per evitare
       // gap visivo fra numeri di riga e contenuto (card più alte del testo).
+      // Serve ceil, non round: arrotondando per difetto il minimo calcolato
+      // resta sotto l'altezza naturale, min-height non morde e il blocco tiene
+      // la sua altezza vera mentre i numeri ne contano una inferiore — è da lì
+      // che nasceva il salto d'interlinea alla riga di chiusura.
       source.style.minHeight = "";
-      const rows = Math.max(1, Math.round(source.offsetHeight / slh));
+      const rows = Math.max(1, Math.ceil(source.getBoundingClientRect().height / slh));
       source.style.minHeight = (rows * slh) + "px";
       return rows;
     }
@@ -536,10 +410,17 @@ function recomputeLineNumbers() {
 function updateNameLn() {
   const fullName = document.getElementById("full-name");
   const slh      = singleLineHeight(fullName);
-  const lines    = Math.max(1, Math.round(fullName.offsetHeight / slh));
+  const lines    = Math.max(1, Math.round(fullName.getBoundingClientRect().height / slh));
   if (lines !== lastNameLines) {
     lastNameLines = lines;
     updateRevealPos();
+    // Il margine del corpo è cambiato: tutto quello che sta sotto è scivolato, e
+    // graffa, altezza del documento e __maxScroll sono a valori vecchi. Senza
+    // rifissarli l'altezza pinnata resta più corta del contenuto e il fondo
+    // pagina non si raggiunge più fino alla fine della generazione.
+    // Va bene anche a pagina non finita: l'unica parte legata al tween è
+    // l'altezza della barra, e repositionBrace la protegge già con indentDone.
+    pinDocHeight();
   }
   recomputeLineNumbers();
   syncLnWidth();
@@ -587,7 +468,7 @@ async function animateName() {
    ANIMAZIONE REVEAL (bio)
    ============================================================ */
 function buildBio() {
-  const text = "/*\nSono uno sviluppatore web full stack di 19 anni. Progetto e sviluppo applicazioni web curando frontend e backend, con attenzione a performance, usabilità e mantenibilità. Affronto i problemi in modo analitico, con particolare attenzione al debug e all'ottimizzazione.\n*/";
+  const text = T.bio;
   prepType(revealContent, text + "\n ");
   document.getElementById("reveal-line-numbers").dataset.fixedRows = "0";
 }
@@ -626,7 +507,7 @@ function buildPercorso() {
   const bodyEl  = document.getElementById("percorso-body");
   const closeEl = document.getElementById("perc-close-text");
 
-  prepType(titleEl, "const percorso = {");
+  prepType(titleEl, T.titoli.percorso);
   prepType(closeEl, "};");
 
   Object.entries(ilMioPercorso).forEach(([periodo, raw], ei, arr) => {
@@ -772,7 +653,7 @@ const techIconMap = {
 
 function buildTools() {
   const bodyEl = document.getElementById("tools-body");
-  prepType(document.getElementById("tools-title-text"), "const strumenti = [");
+  prepType(document.getElementById("tools-title-text"), T.titoli.strumenti);
   prepType(document.getElementById("tools-close-text"), "];");
 
   bodyEl.innerHTML = "";
@@ -860,7 +741,7 @@ function fitCardRow(card) {
 
 function buildProjects() {
   const listEl = document.getElementById("projects-list");
-  prepType(document.getElementById("proj-title-text"), "const progetti = [");
+  prepType(document.getElementById("proj-title-text"), T.titoli.progetti);
   prepType(document.getElementById("proj-close-text"), "];");
 
   listEl.innerHTML = "";
@@ -881,29 +762,30 @@ function buildProjects() {
     card.className = "project-card";
     const techTags = p.tech.map(t => `<span class="tech-tag">${t}</span>`).join("");
     const linkHtml = [
-      p.link && p.link !== "#" ? `<a href="${p.link}" target="_blank" class="proj-open-link">→ open</a>` : ``,
+      // linkLabel: etichetta del link principale, "open" se non specificata.
+      p.link && p.link !== "#" ? `<a href="${p.link}" target="_blank" class="proj-open-link">→ ${p.linkLabel || U.apri}</a>` : ``,
       p.github ? `<a href="${p.github}" target="_blank" class="proj-open-link">→ github</a>` : ``
     ].join("");
     const golHtml = p.isGol ? `
-      <button type="button" class="gol-focus-handle" aria-label="Riduci controlli">
+      <button type="button" class="gol-focus-handle" aria-label="${U.golRiduci}">
         <svg class="gol-ico gol-ico-handle-down" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,6 8,10 12,6"/></svg>
         <svg class="gol-ico gol-ico-handle-up" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,10 8,6 12,10"/></svg>
       </button>
       <div class="gol-controls" data-tweaks-ignore>
-        <button type="button" class="gol-btn" data-gol-action="toggle" aria-label="Pausa/Play" data-tooltip="Pausa / Play">
+        <button type="button" class="gol-btn" data-gol-action="toggle" aria-label="${U.golPausaPlay}" data-tooltip="${U.golPausaPlay}">
           <svg class="gol-ico gol-ico-pause" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="12"/><line x1="10" y1="4" x2="10" y2="12"/></svg>
           <svg class="gol-ico gol-ico-play" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4 L12 8 L5.5 12 Z"/></svg>
         </button>
-        <button type="button" class="gol-btn gol-step-btn" data-gol-action="step" aria-label="Avanza di una generazione" data-tooltip="Passo singolo">
+        <button type="button" class="gol-btn gol-step-btn" data-gol-action="step" aria-label="${U.golAvanza}" data-tooltip="${U.golPassoSingolo}">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4.5 4 L10.5 8 L4.5 12 Z" fill="currentColor" stroke="none"/>
             <line x1="12" y1="4" x2="12" y2="12"/>
           </svg>
         </button>
-        <button type="button" class="gol-btn" data-gol-action="clear" aria-label="Pulisci" data-tooltip="Pulisci griglia">
+        <button type="button" class="gol-btn" data-gol-action="clear" aria-label="${U.golPulisci}" data-tooltip="${U.golPulisciGriglia}">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5"/></svg>
         </button>
-        <button type="button" class="gol-btn" data-gol-action="reseed" aria-label="Re-seed" data-tooltip="Nuova generazione">
+        <button type="button" class="gol-btn" data-gol-action="reseed" aria-label="${U.golReseed}" data-tooltip="${U.golNuovaGen}">
           <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8 A4.5 4.5 0 1 1 8 3.5 L11 3.5"/><polyline points="9.6,2 11,3.5 9.6,5"/></svg>
         </button>
       </div>` : ``;
@@ -911,26 +793,26 @@ function buildProjects() {
     const speedSliderHtml = p.isGol ? `
       <div class="gol-speed-wrap" data-tweaks-ignore>
         <div class="gol-speed-row">
-          <span class="gol-speed-label">velocità</span>
-          <span class="gol-speed-edge">lento</span>
+          <span class="gol-speed-label">${U.golVelocita}</span>
+          <span class="gol-speed-edge">${U.golLento}</span>
           <input type="range" class="gol-speed-slider" data-gol-action="speed"
                  min="100" max="2000" step="50" value="1820">
-          <span class="gol-speed-edge">veloce</span>
+          <span class="gol-speed-edge">${U.golVeloce}</span>
         </div>
         <div class="gol-pen-row">
-          <button type="button" class="gol-btn gol-pen-btn is-active" data-gol-pen="none" data-tooltip="Puntatore (non disegna)">
+          <button type="button" class="gol-btn gol-pen-btn is-active" data-gol-pen="none" data-tooltip="${U.golPuntatore}">
             <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-width="0.6" stroke-linejoin="round">
               <path d="M3 2 L3 12.2 L5.6 9.6 L7.4 13.6 L8.9 13 L7.1 9 L10.6 9 Z"/>
             </svg>
           </button>
-          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="draw" data-tooltip="Disegna trascinando">
+          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="draw" data-tooltip="${U.golDisegna}">
             <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11.2 2.6 L13.4 4.8 L5.6 12.6 L2.6 13.4 L3.4 10.4 Z"/>
               <path d="M9.8 4 L12 6.2"/>
               <path d="M2.6 13.4 L4.6 11.4"/>
             </svg>
           </button>
-          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="glider" data-tooltip="Glider">
+          <button type="button" class="gol-btn gol-pen-btn" data-gol-pen="glider" data-tooltip="${U.golGlider}">
             <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true">
               <rect x="6" y="2" width="3" height="3" fill="currentColor"/>
               <rect x="10" y="6" width="3" height="3" fill="currentColor"/>
@@ -940,7 +822,7 @@ function buildProjects() {
             </svg>
           </button>
           <div class="gol-pattern-wrap">
-            <button type="button" class="gol-btn gol-pattern-trigger" data-gol-action="pattern-toggle" data-tooltip="Pattern">
+            <button type="button" class="gol-btn gol-pattern-trigger" data-gol-action="pattern-toggle" data-tooltip="${U.golPattern}">
               <svg class="gol-ico" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="2" width="3" height="3"/><rect x="7" y="2" width="3" height="3"/><rect x="12" y="2" width="3" height="3" fill="currentColor" stroke="none"/>
                 <rect x="2" y="7" width="3" height="3" fill="currentColor" stroke="none"/><rect x="7" y="7" width="3" height="3"/><rect x="12" y="7" width="3" height="3"/>
@@ -960,7 +842,7 @@ function buildProjects() {
               <button type="button" class="gol-pattern-option" data-gol-pattern="copperhead">copperhead</button>
             </div>
           </div>
-          <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="Modalit&agrave; focus">
+          <button type="button" class="gol-btn gol-focus-btn" data-gol-action="focus" data-tooltip="${U.golFocus}">
             <svg class="gol-ico gol-ico-focus-on" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="2,6 2,2 6,2"/><polyline points="14,6 14,2 10,2"/>
               <polyline points="2,10 2,14 6,14"/><polyline points="14,10 14,14 10,14"/>
@@ -989,7 +871,7 @@ function buildProjects() {
           ${linkHtml ? `<div class="proj-card-links">${linkHtml}</div>` : ``}
         </div>
       </div>` : ``;
-    const golInfoCardHtml = p.isGol ? `<div class="gol-info-card" aria-hidden="true"><button type="button" class="gol-info-close" aria-label="Chiudi">×</button><p class="gol-info-title"></p><p class="gol-info-desc"></p></div>` : ``;
+    const golInfoCardHtml = p.isGol ? `<div class="gol-info-card" aria-hidden="true"><button type="button" class="gol-info-close" aria-label="${U.chiudi}">×</button><p class="gol-info-title"></p><p class="gol-info-desc"></p></div>` : ``;
     card.innerHTML = `
       <div class="proj-card-row">
         <div class="proj-card-body">
@@ -1091,7 +973,7 @@ function buildContatti() {
   const bodyEl  = document.getElementById("contact-body");
   const closeEl = document.getElementById("contact-close-text");
 
-  prepType(titleEl, "const contatti = {");
+  prepType(titleEl, T.titoli.contatti);
   prepType(closeEl, "};");
 
   const isMobile = window.innerWidth <= 600;
@@ -1303,22 +1185,46 @@ function ensureFoldHandles() {
 function activateCursor(el)   { el.classList.add("cursor-active"); currentEditable = el; }
 function deactivateCursor(el) { el.classList.remove("cursor-active"); if (currentEditable === el) currentEditable = null; }
 
+/* Tiene sotto gli occhi la fine del nome mentre lo si scrive: se l'h1 è cresciuto
+   oltre il bordo basso della finestra, la pagina segue di quel tanto più una riga
+   di respiro. Ricorda la destinazione in nameScrollTarget, perché il gestore di
+   scroll deve riconoscere questo scroll come nostro: letto come scroll
+   dell'utente farebbe partire il corpo e chiuderebbe la scrittura del nome.
+   Nessun parametro, nessun valore di ritorno. */
+function keepNameCaretVisible() {
+  const h1 = document.querySelector("h1");
+  const respiro = singleLineHeight(document.getElementById("full-name"));
+  const oltre = h1.getBoundingClientRect().bottom + respiro - window.innerHeight;
+  if (oltre <= 1) return;
+  // Il clamp dello scroll non si scavalca: oltre __maxScroll rimbalzerebbe.
+  const max = window.__maxScroll != null ? window.__maxScroll : Infinity;
+  const target = Math.min(window.scrollY + oltre, max);
+  if (target <= window.scrollY) return;
+  nameScrollTarget = target;
+  window.scrollTo(0, target);
+}
+
 document.addEventListener("keydown", e => {
   handleEasterEggKey(e.key);
   if (!currentEditable) return;
   const isName = currentEditable === document.getElementById("full-name");
-  if (isName && !animFinished) return;
+  // Il nome si scrive solo nella finestra fra la fine della sua animazione e la
+  // partenza del corpo: prima l'animazione lo sta ancora scrivendo, dopo la
+  // pagina è già impaginata sotto e allungare il titolo la sposterebbe tutta.
+  if (isName && (!animFinished || hasTyped)) return;
   if (e.key === "a" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); return; }
   if (e.key === "Backspace") {
     e.preventDefault();
     const t = currentEditable.textContent;
     if (t.length) { currentEditable.textContent = t.slice(0, -1); updateNameLn(); }
+    if (isName) keepNameCaretVisible();
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
     currentEditable.textContent += e.key;
     updateNameLn();
+    if (isName) keepNameCaretVisible();
   }
 });
 document.addEventListener("paste",     e => e.preventDefault());
@@ -1346,9 +1252,9 @@ function showEasterEgg() {
     { html: '', delay: 1800 },
     { html: '<span class="ee-dim">Verifying...</span>', delay: 2000 },
     { html: '', delay: 2800 },
-    { html: '<span class="ee-green">✓ Accesso concesso.</span>', delay: 3000 },
-    { html: '<span class="ee-green">✓ Easter egg trovato!</span>', delay: 3600 },
-    { html: '<span class="ee-dim">  — hai digitato "sudo", bravo hacker.</span>', delay: 4200 },
+    { html: `<span class="ee-green">${T.ui.eeAccesso}</span>`, delay: 3000 },
+    { html: `<span class="ee-green">${T.ui.eeTrovato}</span>`, delay: 3600 },
+    { html: `<span class="ee-dim">${T.ui.eeBravo}</span>`, delay: 4200 },
   ];
   lines.forEach(({ html, delay }) => {
     setTimeout(() => {
@@ -1380,11 +1286,22 @@ document.getElementById("theme-toggle").addEventListener("click", () => {
   const label = document.getElementById("theme-label");
   const isDark = html.getAttribute("data-theme") === "dark";
   html.setAttribute("data-theme", isDark ? "light" : "dark");
-  label.textContent = isDark ? "//Back to the Cave" : "//Devs: Beware";
+  label.textContent = isDark ? U.temaChiaro : U.temaScuro;
   // Se focus mode attivo, fada celle al nuovo colore di contrasto
   if (document.body.classList.contains("gol-focus-mode") && window.__gol) {
     window.__gol.setCellColor(_focusCellColor(), 300);
   }
+});
+
+/* ── Interruttore di lingua ──
+   Segna la lingua attiva e delega il cambio a cambiaLingua() in i18n.js, che
+   salva la scelta e ricarica. L'attributo lang del documento va allineato qui:
+   in index.html è scritto "it" a mano, e con la pagina in inglese resterebbe
+   sbagliato per lettori di schermo e traduttori automatici. */
+document.documentElement.setAttribute("lang", T.htmlLang);
+document.querySelectorAll("#lang-toggle .lang-opt").forEach(btn => {
+  if (btn.dataset.lang === LANG) btn.classList.add("is-active");
+  btn.addEventListener("click", () => cambiaLingua(btn.dataset.lang));
 });
 
 /* ============================================================
@@ -1593,18 +1510,7 @@ function bindGolControls(root) {
   }
 
   // Pattern picker (solo focus mode)
-  const GOL_PATTERN_INFO = {
-    "gosper-gun":     { title: "Gosper Glider Gun", desc: "Prima struttura capace di generazione infinita, scoperta da William Gosper nel 1970. Produce un glider ogni 30 generazioni." },
-    "pulsar":         { title: "Pulsar", desc: "Oscillatore di periodo 3. Uno dei pattern più simmetrici e visivamente ipnotici del GoL." },
-    "pentadecathlon": { title: "Pentadecathlon", desc: "Oscillatore di periodo 15 — tra i più alti per una struttura così semplice. Prende il nome dal ciclo olimpico." },
-    "acorn":          { title: "Acorn", desc: "Methuselah da 7 celle. Cresce in modo caotico per 5206 generazioni prima di stabilizzarsi in 633 celle." },
-    "diehard":        { title: "Diehard", desc: "Methuselah da 7 celle. Sopravvive per 130 generazioni, poi scompare completamente senza lasciare traccia." },
-    "lwss":           { title: "Lightweight Spaceship", desc: "Il più piccolo degli spaceship standard. Si muove orizzontalmente di 2 celle ogni 4 generazioni (velocità c/2). Scoperto da John Conway nel 1970." },
-    "beacon":         { title: "Beacon", desc: "Oscillatore di periodo 2 formato da due blocchi 2×2 sovrapposti a un angolo. Uno dei più semplici e comuni oscillatori del GoL." },
-    "pi-heptomino":   { title: "Pi-Heptomino\n(il mio preferito)", desc: "Methuselah da 7 celle a forma di π. Evolve in modo caotico per 173 generazioni prima di stabilizzarsi in una configurazione con glider." },
-    "switch-engine":  { title: "Switch Engine", desc: "Struttura da 8 celle scoperta da Charles Corderman nel 1971. Cresce in modo infinito lasciando una scia di detriti, muovendosi in diagonale a velocità c/12." },
-    "copperhead":     { title: "Copperhead", desc: "Spaceship di periodo 10 scoperto nel 2016. Si muove verticalmente a velocità c/10. Notevole per la sua forma compatta e simmetrica." },
-  };
+  const GOL_PATTERN_INFO = T.golPattern;
   const patternTrigger = root.querySelector('[data-gol-action="pattern-toggle"]');
   const patternDropdown = root.querySelector('.gol-pattern-dropdown');
   const card = root.closest(".project-card");
@@ -1811,8 +1717,14 @@ window.addEventListener("scroll", () => {
   _scrollY = window.scrollY;
   const h1       = document.querySelector("h1");
   const fullName = document.getElementById("full-name");
-  if (window.scrollY > 0 && animFinished) fullName.classList.add("no-cursor");
-  const outOfView = window.scrollY > window.innerHeight * 0.3 + h1.offsetHeight;
+  // Scroll nostro, fatto per seguire la scrittura del nome: non è l'utente che
+  // se ne va a leggere, quindi non deve far partire il corpo né spegnere il
+  // cursore. La firma è la destinazione, e si consuma qui: se l'utente scrolla
+  // davvero finisce altrove e il ramo normale riprende.
+  const mioScroll = nameScrollTarget >= 0 && Math.abs(window.scrollY - nameScrollTarget) < 2;
+  if (mioScroll) nameScrollTarget = -1;
+  if (window.scrollY > 0 && animFinished && !mioScroll) fullName.classList.add("no-cursor");
+  const outOfView = !mioScroll && window.scrollY > window.innerHeight * 0.3 + h1.offsetHeight;
   if (outOfView && !animFinished) {
     skipNameAnim = true;
     surnameEl.textContent = originalSurname;
@@ -1820,14 +1732,18 @@ window.addEventListener("scroll", () => {
     updateNameLn();
     animFinished = true;
   }
-  if (((!animFinished && outOfView) || (animFinished && window.scrollY > 0)) && !hasTyped) {
+  if (!mioScroll && ((!animFinished && outOfView) || (animFinished && window.scrollY > 0)) && !hasTyped) {
     hasTyped = true;
+    // Il nome non è più scrivibile: via anche il caret, sennò lampeggia su un
+    // titolo che ignora i tasti. È l'unico punto in cui il cursore era attivo
+    // davvero — gli altri che alzano hasTyped partono da pagina già scrollata.
+    deactivateCursor(fullName);
     sec.reveal.started = true;
     startIndentLine();
     revealBio();
   }
-  if (animFinished && window.scrollY > 0) startIndentLine();
-  checkSectionsPassed();
+  if (animFinished && window.scrollY > 0 && !mioScroll) startIndentLine();
+  if (!mioScroll) checkSectionsPassed();
 });
 
 let indentLineStarted = false;
@@ -1904,6 +1820,26 @@ document.fonts?.ready.then(() => {
   pinDocHeight();
 });
 
+/* Rimpicciolisce il numero finale quando non sta nella colonna. È l'unico
+   numero scritto a 7.5vw come la graffa, quindi una cifra in più lo allarga di
+   un terzo: a tre cifre finisce sotto la parentesi. Si riparte sempre dal font
+   pieno, così tornando a due cifre — o allargando la finestra — il numero
+   recupera la sua dimensione da solo.
+   el: lo span della graffa. maxW: larghezza disponibile in px, cioè la colonna
+   dei numeri più il suo margine. Nessun valore di ritorno. */
+function fitBraceLn(el, maxW) {
+  el.style.fontSize = "";
+  el.style.lineHeight = "";
+  if (!(maxW > 0)) return;
+  // Nascosto il rect è a zero: niente da adattare, e la divisione sarebbe /0.
+  const r = el.getBoundingClientRect();
+  if (r.width <= maxW || !r.width) return;
+  el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * maxW / r.width) + "px";
+  // L'interlinea resta quella del font pieno: il box non si accorcia e le cifre
+  // restano centrate dove stavano, invece di risalire sopra la graffa.
+  el.style.lineHeight = r.height + "px";
+}
+
 function repositionBrace() {
   const contactSec = document.getElementById("contact-section");
   const h1r = document.querySelector("h1").getBoundingClientRect();
@@ -1923,6 +1859,7 @@ function repositionBrace() {
   if (braceLn) {
     braceLn.style.left = (h1r.left + window.scrollX) + "px";
     braceLn.style.top  = braceTop + "px";
+    fitBraceLn(braceLn, ll - h1r.left);
   }
   indentLine.style.left   = ll + "px";
   indentLine.style.top    = lt + "px";

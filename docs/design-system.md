@@ -52,6 +52,35 @@ Dati: campo `screenshots: [{ src, alt }]` di `iMieiProgetti`; array vuoto =
 nessuna striscia. File in `assets/screenshots/`.
 Uso: `script.js` → `buildProjects()`, `style.css` → `.proj-shots`.
 
+### Interruttore di lingua
+`#lang-toggle` con due `.lang-opt` (`<button>`) separate da `.lang-sep`. Sta
+sulla stessa riga del theme toggle, a `right: 13rem` per stargli a sinistra
+senza sovrapporsi a `//Devs: Beware`. La lingua attiva prende `.is-active`
+(colore `--text`), l'altra resta `--text-dim`: la selezione si legge dalla
+luminosità, senza bordi né sfondi. Come il theme toggle diventa `fixed` in
+focus mode. **Serve `font: inherit`** (vedi regola 3).
+Uso: `index.html` → `#lang-toggle`, `script.js` → binding sotto il theme toggle.
+
+### Albero dei rami (cb)
+`<pre class="cb-tree">` con dentro `.cb-on` (percorso illuminato) e `.cb-cur`
+(nodo del cursore, in grassetto). I due colori sono **letterali, non token**:
+`#ff8c66` e `#8c8c8c` sono quelli veri della CLI `cb` (`src/stile.js` di quel
+progetto), riprodotti perché l'albero è uno screenshot testuale del prodotto.
+Nessun altro elemento del sito deve usarli. `overflow-x: auto`: l'albero è
+largo e non deve allargare la card, con `overflow-y: hidden` esplicito accanto
+(vedi regola 5). **`line-height: 1` è vincolante**: i tratti verticali di `┳` e
+`┗` arrivano al bordo della cella, e qualunque interlinea in più li stacca
+lasciando le giunzioni spezzate. I nodi sono `●` U+25CF e `○` U+25CB, non i
+`⬤ ◯` della CLI: Hack non ha U+2B24 e il fallback lo rende largo 1.43 celle,
+sfondando la griglia.
+Uso: `script.js` → `iMieiProgetti`, card *Claude Code Branching*.
+
+### Link della card progetto
+`.proj-open-link`, uno per `link` e uno per `github`. L'etichetta del primo è
+`open` per difetto e si cambia col campo `linkLabel` della voce di
+`iMieiProgetti` (es. `npm` per un pacchetto pubblicato).
+Uso: `script.js` → `buildProjects()`.
+
 ### Tech tag
 `.tech-tag`, bordo `--line-bar`, testo `--text-dim`, si illumina all'hover della
 card. Usato sia nelle card sia nei blocchi `dettagli`.
@@ -105,3 +134,6 @@ numeri che sarebbero vuoti.
 3. Ogni nuovo `<button>` che deve seguire il testo va con `font: inherit`.
 4. Le animazioni di dimensione vanno accompagnate da `pumpLayoutDuring()`,
    altrimenti barre, graffa e altezza del documento restano indietro.
+5. Chi imposta `overflow-x` deve dichiarare anche `overflow-y`: per specifica,
+   se un asse è diverso da `visible` l'altro passa da `visible` ad `auto`, e
+   basta 1px di sforo per far comparire una scrollbar non voluta.
