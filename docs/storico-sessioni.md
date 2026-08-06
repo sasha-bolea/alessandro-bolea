@@ -4,6 +4,83 @@ Archivio append-only. Il più recente in cima.
 
 ---
 
+## 2026-08-06 12:20 — Generazione a fine pagina, contrasto giorno, GoL domato
+
+Sessione di rifinitura partita da una richiesta di comportamento e finita a
+scoprire che stavamo guardando due siti diversi.
+
+### Come è andata
+
+Prima cosa: la **generazione si ferma a fine pagina visibile** e riprende allo
+scroll. È lo specchio dello skip che esisteva già, quindi è venuto naturale
+(vedi architettura §7). Il nodo non era il cancello ma distinguere il proprio
+scroll da quello dell'utente: l'auto-scroll che segue la scrittura del nome
+avrebbe fatto partire il corpo. Risolto usando la **destinazione come firma**,
+senza timer.
+
+Poi il **contrasto del tema giorno**. Misurando è venuto fuori che i valori
+chiari erano il riflesso di quelli scuri, e che il nero su fondo caldo rende
+meno: il giorno perdeva su ogni elemento. Le celle del Game of Life invece
+andavano nella direzione opposta — più marcate che di notte — e sono state
+schiarite.
+
+Il **Game of Life che si ripopolava** dopo "pulisci griglia" ha richiesto un
+flag solo, perché le sorgenti erano tre e andavano spente insieme.
+
+Poi il pezzo che è costato di più, ed è colpa mia. Il fix del GoL "non
+funzionava" per diversi giri: ho ipotizzato la cache del browser e ho dato a
+Sasha un controllo da fare in console. Ha risolto lui mandando una **registrazione
+dello schermo**: nella barra degli indirizzi c'era `alessandrobolea.com`, non
+`localhost`. Stava provando in produzione, dove il fix non era mai stato
+pubblicato. Da lì è nato `docs/deploy.md`, che non esisteva: il sito è su Vercel
+collegato a `master`, e nel repo non c'è **nessun file** che lo dica.
+
+Ultimo blocco, due bug di layout scoperti aprendo una card a metà animazione:
+scroll bloccato e barra di indentazione ferma. Il primo era di nuovo una guardia
+`indentDone` su `repositionBrace()` — la terza volta che lo stesso errore
+produce lo stesso danno. Ora è una regola scritta nelle convenzioni.
+
+**Sul metodo**: tre diagnosi false in una sessione, tutte dallo stesso
+meccanismo. La tab in background sospende `rAF` e le transizioni CSS, e
+`getComputedStyle` durante una transizione congelata restituisce il valore di
+partenza — quindi una regola sembra non applicarsi e un'animazione sembra
+bloccata. Una volta ho anche letto come "base" un `<style>` di prova rimasto
+da una chiamata precedente. Da qui la convenzione di spegnere transizioni e
+animazioni prima di misurare, e di ripulire gli stili iniettati.
+
+### Cambiamenti al codice
+
+**Cancello di fine pagina**
+- `script.js` → `_cursorTop`, `oltreLaPiega()`, `_attesaRientro`,
+  `risvegliaScrittura()`, `attendiRientro()`; `fast()` diventa async e attende
+- gestore di scroll e resize → `risvegliaScrittura()`
+
+**Tema chiaro**
+- `style.css` → `--text-dim` 0,22 → 0,34 · `--line-bar` 0,15 → 0,30 ·
+  `--gol-cell` `rgb(205,200,192)` → `rgb(222,217,209)`
+
+**Interruttore di lingua**
+- `style.css` → `#lang-toggle` da `right: 13rem` a `left: 2rem`
+- `style.css` → `body.gol-focus-mode #lang-toggle { display: none }`
+
+**Game of Life**
+- `gol.js` → flag `spawnAutomatico`, in AND nelle tre sorgenti di ripopolamento;
+  abbassato da `clear()` e `loadPattern()`, rialzato da `reseed()`
+
+**Focus mode**
+- `style.css` → media query 601–950px: plancia spostata di 148px così plancia e
+  info card risultano centrate come gruppo, incluso lo stato collassato
+
+**Apertura card durante la scrittura**
+- `script.js` → in `pumpLayoutDuring()` e `recomputeProjLines()`:
+  `repositionBrace()` senza guardia `indentDone`,
+  `updateIndentLineH(_cursorEl)` per riallineare cursore e bersaglio della barra,
+  `risvegliaScrittura()`
+
+**Docs**
+- `docs/deploy.md` **nuovo**: Vercel da `master`, push = pubblicazione, come
+  verificare cosa c'è online dai contatori `?v=`
+
 ## 2026-08-06 09:15 — Card cb, bilinguismo IT/EN, titolo editabile domato
 
 Sessione a raffica: una card nuova, poi otto correzioni nate guardando il

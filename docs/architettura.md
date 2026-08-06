@@ -129,6 +129,29 @@ browser.
 non degrada in italiano, dà `undefined` a schermo. Il controllo è un confronto
 delle chiavi fra `CONTENUTI.it` e `CONTENUTI.en`.
 
+## 7. Cancello di fine pagina
+
+Specchio dello skip. Lo skip genera **senza animazione** ciò che è già uscito in
+alto; il cancello **non genera affatto** ciò che cadrebbe sotto il bordo basso,
+così la scrittura accompagna la lettura invece di correre avanti.
+
+```js
+function oltreLaPiega() { return _cursorTop > _scrollY + window.innerHeight; }
+```
+
+Il confronto è sul **top** dell'elemento in scrittura, non sul fondo: si aspetta
+solo quando non se ne vede nemmeno l'inizio, quindi l'ultimo elemento visibile
+viene scritto per intero invece di troncarsi a metà.
+
+Non fa polling: `attendiRientro()` mette un resolver in `_attesaRientro`, e
+`risvegliaScrittura()` li libera tutti. Va chiamata da ogni punto in cui la
+piega o l'elemento si spostano: gestore di scroll (dopo l'aggiornamento di
+`_scrollY`, che è il valore su cui il predicato si rivaluta), resize, e il tick
+del pump quando una card si apre o si chiude.
+
+Lo skip apre il cancello comunque (`!s.skip` nella condizione): scorrendo di
+colpo in fondo non si resta appesi su un elemento che va solo riempito.
+
 ## Convenzioni
 
 - **Cache busting**: dopo ogni modifica alzare `?v=` in `index.html`
@@ -145,6 +168,15 @@ delle chiavi fra `CONTENUTI.it` e `CONTENUTI.en`.
 - **Verificare a tab in primo piano**: Chrome throttla `setTimeout` e `rAF`
   nelle tab in background, quindi le animazioni sembrano bloccate e si misurano
   stati a metà. Un'animazione ferma **a metà carattere** è throttling, non un
-  bug.
+  bug. Vale anche per le **transizioni CSS**: `getComputedStyle` durante una
+  transizione congelata restituisce il valore di **partenza**, quindi una regola
+  sembra non applicarsi. Prima di misurare colori o trasformazioni, iniettare
+  `*{transition:none !important; animation:none !important}`.
+- **Mai mettere `repositionBrace()` dietro `if (window.indentDone)`**. È l'unico
+  posto che scrive l'altezza del documento e `__maxScroll`: sotto quella guardia
+  non gira durante la scrittura, e qualunque crescita del contenuto (card aperta,
+  titolo allungato) rende il fondo pagina irraggiungibile. La sola parte legata
+  al tween è l'altezza della barra, e `repositionBrace` la protegge già da sé.
+  Lo stesso errore è stato reintrodotto tre volte.
 - Ogni sezione nuova va aggiunta a mano a `BLOCK_CLOSE_MAP`, `syncLnWidth`,
   `SECTION_KEY_BY_ID`, `sec`/`secOrder` e a `buildAll`.

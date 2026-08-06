@@ -101,7 +101,10 @@ body.gol-focus-mode #theme-toggle {
   z-index: 100;
   user-select: none;
 }
-body.gol-focus-mode #lang-toggle { position: fixed; }
+/* In focus mode sparisce: il theme toggle resta perché serve a cambiare il
+   contrasto delle celle mentre la simulazione è a schermo, cambiare lingua no.
+   Sotto c'è solo la griglia, e le sezioni tradotte sono già fuori vista. */
+body.gol-focus-mode #lang-toggle { display: none; }
 .lang-opt {
   /* I <button> non ereditano il font: senza questo prendono l'Arial 13.3px
      dello user agent e la riga si disallinea dal theme toggle. */
@@ -1167,6 +1170,32 @@ body.gutter-hover .fold-chevron,
 }
 .project-card.gol-focus-active.gol-focus-collapsed {
   transform: translateX(-50%) translateY(calc(100% - 2em));
+}
+
+/* ── Plancia e info card centrate come gruppo ──
+   L'info card è ancorata a destra della plancia (`left: calc(100% + 1rem)`),
+   quindi il gruppo è più largo della sola plancia di 280px + 1rem = 296px.
+   Centrando la plancia l'info sporge di metà di quell'eccedenza, 148px, e sotto
+   una certa larghezza finisce tagliata fuori dallo schermo.
+   La soglia non è a occhio: il taglio comincia dove il bordo destro dell'info
+   supera il viewport, cioè 0,5vw (centro) + 0,18vw (metà plancia, che è 36vw)
+   + 296 > vw, quindi sotto i 925px. A 950px c'è ancora una decina di pixel di
+   margine, ed è lì che si entra.
+   Il rimedio è spostare la plancia di quei 148px: il gruppo risulta centrato e
+   le due card restano separate. Sotto i 600px non serve — l'altro media query
+   mette l'info sopra la plancia, già centrata per conto suo. */
+@media (min-width: 601px) and (max-width: 950px) {
+  .project-card.gol-focus-active:has(.gol-info-card.is-visible) {
+    transform: translateX(calc(-50% - 148px));
+  }
+  .project-card.gol-focus-active.gol-focus-collapsed:has(.gol-info-card.is-visible) {
+    transform: translateX(calc(-50% - 148px)) translateY(calc(100% - 2em));
+  }
+  /* Da collassata l'info diventa `fixed` ancorata al 50% del viewport, quindi
+     non segue la trasformazione della plancia: va spostata di suo. */
+  .gol-focus-collapsed .gol-info-card.is-visible {
+    left: calc(50% + clamp(140px, 18vw, 240px) + 1rem - 148px);
+  }
 }
 
 /* Hide elementi card non necessari in focus */

@@ -1434,7 +1434,22 @@ function pumpLayoutDuring(durationMs) {
     // "dynamic-block" pinna minHeight sul source, impedendo allo
     // shrink di propagarsi e al ResizeObserver di scattare in chiusura.
     recomputeLineNumbers();
-    if (window.indentDone) repositionBrace();
+    // Senza guardia su indentDone: repositionBrace è l'unico posto che scrive
+    // l'altezza del documento e __maxScroll, e aprendo una card mentre la
+    // pagina si sta ancora scrivendo il contenuto cresce ma quei due valori
+    // restavano fermi — lo scroll verso il basso si bloccava. L'unica parte
+    // legata al tween è l'altezza della barra, che repositionBrace protegge già
+    // da sé con indentDone.
+    repositionBrace();
+    // Il contenuto sotto la card è scivolato, quindi l'elemento in scrittura è
+    // altrove. Ripassare da updateIndentLineH con lo stesso elemento rimisura
+    // due cose insieme: il cursore del cancello di fine pagina, che altrimenti
+    // confronta una posizione vecchia, e il bersaglio della barra di
+    // indentazione. Senza il secondo la barra resta all'altezza di prima
+    // dell'apertura mentre il contenuto è già più in basso: il bersaglio si
+    // aggiorna solo ai punti di generazione, e aprire una card non lo è.
+    if (_cursorEl) updateIndentLineH(_cursorEl); else refreshCursorPos();
+    risvegliaScrittura();
     if (performance.now() < _layoutPumpEnd) {
       requestAnimationFrame(tick);
     } else {
@@ -1467,7 +1482,11 @@ function recomputeProjLines() {
     const listEl = document.getElementById("projects-list");
     if (!listEl) { clearInterval(_projAppendTimer); _projAppendTimer = null; return; }
     recomputeLineNumbers();
-    if (window.indentDone) repositionBrace();
+    // Come nel pump: senza questo l'altezza del documento non segue la crescita
+    // della lista e il fondo pagina diventa irraggiungibile.
+    repositionBrace();
+    if (_cursorEl) updateIndentLineH(_cursorEl); else refreshCursorPos();
+    risvegliaScrittura();
     // Stoppa quando l'altezza si stabilizza (~100ms invariata)
     if (listEl.offsetHeight === lastH) stableTicks++;
     else { stableTicks = 0; lastH = listEl.offsetHeight; }

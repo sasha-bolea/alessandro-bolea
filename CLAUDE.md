@@ -64,7 +64,9 @@ metà carattere* è throttling, non un bug.
 ## 7. Riferimenti docs
 
 - [docs/STATO.md](docs/STATO.md) — stato, problemi aperti, decisioni, backlog
-- [docs/architettura.md](docs/architettura.md) — i cinque meccanismi non ovvi
+- [docs/deploy.md](docs/deploy.md) — **il sito è su Vercel collegato a `master`:
+  `git push` pubblica.** Nel repo non c'è nessun file che lo dica
+- [docs/architettura.md](docs/architettura.md) — i sette meccanismi non ovvi
 - [docs/design-system.md](docs/design-system.md) — catalogo UI, **da consultare
   prima di toccare l'interfaccia**
 - [docs/bug-risolti.md](docs/bug-risolti.md) — registro bug

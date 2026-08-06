@@ -1,6 +1,6 @@
 # STATO
 
-Ultimo aggiornamento: **2026-08-06 09:15**
+Ultimo aggiornamento: **2026-08-06 12:20**
 
 ## Stato attuale
 
@@ -11,66 +11,70 @@ chiusura posizionata in px, Game of Life come sfondo su canvas full-document.
 Sezioni in ordine: nome (h1) → bio → percorso → strumenti → progetti →
 contatti → `}`.
 
-**Bilingue italiano/inglese.** Interruttore `IT | EN` in alto a destra, in riga
-col theme toggle. Contenuti in `i18n.js`, uno per lingua; il cambio salva in
-`localStorage` e ricarica, riprendendo dallo stesso punto di scroll. Alla prima
-visita decide `navigator.language`. Vedi [architettura.md](architettura.md) §6.
+**Pubblicato su [alessandrobolea.com](https://alessandrobolea.com) via Vercel,
+collegato al branch `master`: `git push` pubblica.** Nel repo non c'è nessun
+file che lo dichiari — vedi [deploy.md](deploy.md).
 
-Quattro progetti in vetrina: Game of Life (interattivo, con focus mode e
-pattern), Royale Arena, ELAN42 Time Tracker (con striscia screenshot), Claude
-Code Branching.
+**Bilingue italiano/inglese.** Interruttore `IT | EN` in alto a sinistra, nascosto
+in focus mode. Contenuti in `i18n.js`; il cambio salva in `localStorage` e
+ricarica, riprendendo dallo stesso punto di scroll. Alla prima visita decide
+`navigator.language`.
 
-Il titolo è editabile in una finestra precisa: fra la fine della sua animazione
-e la partenza del corpo, cioè finché la pagina è ancora in cima. Dentro quella
-finestra la pagina segue il punto di scrittura e l'altezza del documento si
-rifissa a ogni capo di riga; appena il corpo parte, la scrittura si chiude e il
-caret si spegne.
+La generazione del testo **si ferma alla fine della pagina visibile** e riprende
+allo scroll (architettura §7). Il titolo è editabile nella finestra fra la fine
+della sua animazione e la partenza del corpo, e la pagina segue il punto di
+scrittura.
+
+Quattro progetti: Game of Life (interattivo, focus mode, pattern), Royale Arena,
+ELAN42 Time Tracker, Claude Code Branching.
 
 ## Problemi aperti
 
 | Problema | Note |
 |---|---|
 | Barra di indentazione e graffa desincronizzate alla chiusura delle card | La graffa risale di colpo, la barra si accorcia col tween: per un istante la fine della barra resta più in basso della graffa. Lasciato aperto per scelta. Da guardare: `_tweenLine` / `_lineTargetH` contro `repositionBrace`. |
-| Animazione delle linee di indentazione scattosa | Soprattutto sulle card, che sono alte: il target salta di colpo. Tre tentativi falliti (vedi storico 2026-07-29). Ipotesi rimasta: invertire il pilota, orologio unico in coordinate Y. |
-| L'edit del titolo distrugge `#surname` e `#name` | `currentEditable.textContent += e.key` sostituisce gli span interni con un unico nodo di testo: dopo la prima lettera quei due id non esistono più. Non rompe nulla di visibile oggi, ma qualunque codice che li cerchi dopo un edit trova `null`. |
-| Freccette di fold irraggiungibili su touch | Dipendono da `:hover`. Si risolve con `@media (hover: none) { .fold-chevron { opacity: 1 } }`. |
-| Correzione di 8px allo swap del font | `fonts.ready` rimisura quando arriva Hack dal CDN. Intrinseco, si mitiga solo precaricando il font. |
-| `syncLnWidth` con lista di id cablata a mano | Ogni sezione nuova va aggiunta a mano. Stessa trappola di `BLOCK_CLOSE_MAP`. |
-| Tema non persistito | Scroll, focus mode GoL e **lingua** vanno in storage, il tema no: al reload torna dark. |
-| Accessibilità | `#theme-toggle` è un `<div>` cliccabile senza `role`/`tabindex`; `#ee-close` uno `<span>` con `onclick` inline. L'interruttore di lingua invece usa `<button>`. |
-| `getItem("golFocusMode")` senza `try/catch` | Unico accesso a storage non protetto: `i18n.js` e il resto sono in `try`. |
+| Barra ferma a metà — da riconfermare in primo piano | Il bersaglio ora si ricalcola a ogni tick del pump. Se il sintomo torna, la causa è un'altra: `_lineTweenRunning` che resta `true` senza un rAF in coda, e il rimedio è rilanciare il tween. Non riproducibile in tab background, dove il throttling produce un ritardo identico. |
+| Animazione delle linee di indentazione scattosa | Il target salta di colpo sulle card, che sono alte. Ipotesi rimasta: orologio unico in coordinate Y. |
+| L'edit del titolo distrugge `#surname` e `#name` | `currentEditable.textContent += e.key` sostituisce gli span interni con un unico nodo di testo. Non rompe nulla di visibile, ma chi li cerca dopo un edit trova `null`. |
+| `spawnAutomatico` non sopravvive al reload | Dopo un ricaricamento il Game of Life riparte popolato. Coerente col fatto che nemmeno la griglia è persistita. |
+| Freccette di fold irraggiungibili su touch | Dipendono da `:hover`. `@media (hover: none) { .fold-chevron { opacity: 1 } }`. |
+| Correzione di 8px allo swap del font | `fonts.ready` rimisura quando arriva Hack dal CDN. Si mitiga solo precaricando il font. |
+| `syncLnWidth` con lista di id cablata a mano | Ogni sezione nuova va aggiunta a mano, come per `BLOCK_CLOSE_MAP`. |
+| Tema non persistito | Scroll, focus mode GoL e lingua vanno in storage, il tema no: al reload torna dark. |
+| Accessibilità | `#theme-toggle` è un `<div>` cliccabile senza `role`/`tabindex`; `#ee-close` uno `<span>` con `onclick` inline. L'interruttore di lingua usa `<button>`. |
+| `getItem("golFocusMode")` senza `try/catch` | Unico accesso a storage non protetto. |
 
 ## Decisioni
 
 | Data | Decisione | Motivo |
 |---|---|---|
-| 2026-08-06 | Contenuti in `i18n.js`, non in `script.js` | Sono testo, non logica, e in due lingue raddoppiano. Separarli lascia `script.js` sul suo lavoro (typing, geometria, numeri di riga) e rende ovvio dove si aggiunge roba. |
-| 2026-08-06 | Cambio lingua con **ricarica**, non scambio a caldo | La pagina si scrive con un motore a stati; sostituire i testi a metà animazione vorrebbe dire rifarne il percorso. Lo scroll è già persistito, quindi la ricarica non si vede: stesso punto, testo già scritto. |
-| 2026-08-06 | Lingua attiva distinta per **luminosità**, non per bordo | `.is-active` a `--text`, l'altra a `--text-dim`. Nessun elemento decorativo nuovo in un'interfaccia che è tutta testo. |
-| 2026-08-06 | `nameScrollTarget` come firma dello scroll, non un timer | L'auto-scroll durante la scrittura del nome andrebbe letto dal gestore come "l'utente se ne va", facendo partire il corpo. Confrontare la destinazione è deterministico e si consuma una volta; una finestra temporale sarebbe stata a occhio. |
-| 2026-08-06 | Riserva dell'h1 come pavimento, non come tetto | Serve a tenere fermo il margine del corpo mentre il nome si digita, ma il nome è editabile: oltre i due testi dell'animazione deve vincere l'altezza vera. |
-| 2026-08-06 | Glifi `● ○` invece di `⬤ ◯` nell'albero cb | Hack non ha U+2B24 e il fallback lo rende largo 1,43 celle, sfondando la griglia monospace. `● ○` sono il set di ripiego previsto da cb stesso. |
-| 2026-08-06 | `linkLabel` opzionale invece di rinominare `open` | La label era cablata per tutti i progetti: cambiarla avrebbe messo "npm" anche su Royale Arena, che è un sito. |
-| 2026-07-29 | Split **build/reveal** invece di ghost render | Il ghost render è impossibile qui: solo `tools-body` e `projects-list` si svuotano prima di rigenerarsi, quindi un secondo passaggio duplicherebbe le righe di percorso e contatti. |
-| 2026-07-29 | `2.2vh` → `2.2svh` nei font-size | Con `vh` il collasso della barra URL su Android cambia il font-size e quindi l'altezza totale. `svh` è calcolata a barra espansa e non varia. |
-| 2026-07-29 | `skip` come **getter** dinamico | Trasforma ~20 punti di lettura in per-elemento senza toccarli, e rende lo skip reversibile per costruzione. |
-| 2026-07-29 | Fold: stato nel DOM, non in variabili | `recomputeLineNumbers` gira decine di volte al secondo; `closest(".is-folded")` dà l'annidamento gratis. |
+| 2026-08-06 | Generazione fermata alla piega, non solo accelerata | Lo skip risolveva metà del problema (contenuto già passato); mancava l'altra metà, il contenuto non ancora guardato. Così l'animazione accompagna la lettura invece di correre avanti. |
+| 2026-08-06 | Scroll proprio riconosciuto dalla **destinazione**, non da un timer | L'auto-scroll che segue la scrittura del nome sarebbe stato letto come "l'utente se ne va" e avrebbe fatto partire il corpo. Confrontare la destinazione è deterministico e si consuma una volta; una finestra temporale sarebbe stata a occhio. |
+| 2026-08-06 | Valori del tema chiaro **misurati**, non riflessi da quelli scuri | Il nero su fondo caldo rende meno del bianco su fondo scuro: con le stesse alpha il giorno perdeva su ogni elemento. Le celle del GoL vanno nella direzione opposta, schiarite. |
+| 2026-08-06 | Un flag solo per le tre sorgenti di ripopolamento del GoL | Spegnerle separatamente avrebbe lasciato scoperto il caso del resize, che è quello che si nota di meno e dà più fastidio. |
+| 2026-08-06 | `repositionBrace()` mai dietro `indentDone` | Terza volta che quella guardia rende il fondo pagina irraggiungibile. Ora è una convenzione scritta. |
+| 2026-08-06 | Soglia del media query calcolata, non a occhio | `0,5vw + 0,18vw + 296 > vw` dà 925px: il numero dice anche *perché*, e regge se cambiano le larghezze. |
+| 2026-08-06 | Contenuti in `i18n.js`, cambio lingua con **ricarica** | Sono testo, non logica, e in due lingue raddoppiano. Sostituire i testi a metà animazione vorrebbe dire rifare il percorso del motore di rivelazione; lo scroll è già persistito, quindi la ricarica non si vede. |
+| 2026-07-29 | Split **build/reveal** invece di ghost render | Solo `tools-body` e `projects-list` si svuotano prima di rigenerarsi: un secondo passaggio duplicherebbe percorso e contatti. |
+| 2026-07-29 | `2.2vh` → `2.2svh` nei font-size | Con `vh` il collasso della barra URL su Android cambia il font-size e quindi l'altezza totale. |
+| 2026-07-29 | `skip` come **getter** dinamico | Rende lo skip per-elemento e reversibile per costruzione, senza toccare i ~20 punti di lettura. |
 
 ## Backlog
 
-1. Sincronizzare barra di indentazione e graffa alla chiusura delle card (vedi
-   problemi aperti) — lasciato aperto per scelta a fine sessione.
-2. Animazione linee a velocità costante.
-3. Preservare `#surname` / `#name` durante l'edit del titolo.
-4. Freccette di fold su touch.
-5. Persistenza del tema (la lingua è già persistita, stesso schema).
-6. Accessibilità di theme toggle ed easter egg.
-7. `syncLnWidth` e `BLOCK_CLOSE_MAP` derivati dal DOM invece che cablati.
-8. Favicon assente (404 a ogni caricamento, innocuo).
+1. Sincronizzare barra di indentazione e graffa alla chiusura delle card.
+2. Riconfermare in primo piano la barra ferma a metà (vedi problemi aperti).
+3. Animazione linee a velocità costante.
+4. Preservare `#surname` / `#name` durante l'edit del titolo.
+5. Freccette di fold su touch.
+6. Persistenza del tema (la lingua è già persistita, stesso schema).
+7. Accessibilità di theme toggle ed easter egg.
+8. `syncLnWidth` e `BLOCK_CLOSE_MAP` derivati dal DOM invece che cablati.
+9. Favicon assente (404 a ogni caricamento, innocuo).
 
 ## Riferimenti
 
-- [architettura.md](architettura.md) — i sei meccanismi non ovvi e le convenzioni
+- [deploy.md](deploy.md) — **come si pubblica e come verificare cosa c'è online**
+- [architettura.md](architettura.md) — i sette meccanismi non ovvi e le convenzioni
 - [design-system.md](design-system.md) — catalogo elementi UI
 - [bug-risolti.md](bug-risolti.md) — registro bug
 - [storico-sessioni.md](storico-sessioni.md) — archivio sessioni

@@ -4,6 +4,87 @@ Registro append-only. Il più recente in cima.
 
 ---
 
+## 2026-08-06 — Aprire una card durante la scrittura bloccava lo scroll
+
+**Sintomo** Aprendo una card progetto prima della fine dell'animazione non si
+riusciva più a scorrere verso il basso, la scrittura si fermava e comparivano
+artefatti.
+**Causa** Nel tick di `pumpLayoutDuring()` la chiamata a `repositionBrace()` era
+dietro `if (window.indentDone)`. `repositionBrace` è l'unico posto che scrive
+`document.body.style.height` e `window.__maxScroll`; durante l'animazione
+`indentDone` è `false`, quindi la lista cresceva ma quei due valori restavano
+fermi. Misurato: aprendo due card la lista passava da 934 a 2038px mentre
+`__maxScroll` restava 1856 — **1563px di pagina irraggiungibili**.
+La scrittura ferma era una conseguenza, non una causa: il cancello di fine
+pagina aspettava uno scroll che era diventato impossibile.
+**Fix** Rimossa la guardia, qui e nell'identica copia dentro
+`recomputeProjLines()`. L'unica parte legata al tween è l'altezza della barra di
+indentazione, che `repositionBrace` protegge già da sé con `indentDone`.
+Aggiunti accanto `refreshCursorPos()` e `risvegliaScrittura()`.
+**Nota** È la terza volta che una guardia `indentDone` messa per prudenza sul
+ri-fissaggio dell'altezza produce lo stesso danno (vedi il bug del titolo
+editabile, stessa data). Ora non ne restano.
+**File** `script.js`
+
+## 2026-08-06 — Barra di indentazione ferma a metà con una card aperta
+
+**Sintomo** La barra principale si fermava a un'altezza mentre il contenuto
+generato era già più in basso.
+**Causa** `_lineTargetH` si calcola dal fondo dell'elemento in scrittura, e
+`updateIndentLineH()` viene chiamata **solo ai punti di generazione**. Aprire una
+card non è un punto di generazione: il contenuto sotto scende, il fondo
+dell'elemento in scrittura si sposta, e il bersaglio restava quello vecchio.
+**Fix** Il tick del pump e quello di `recomputeProjLines()` ripassano da
+`updateIndentLineH(_cursorEl)`, che ricalcola il bersaglio dalla posizione viva
+dell'elemento.
+**Attenzione in verifica** Una tab in background sospende `requestAnimationFrame`
+e quindi `_tweenLine`: la barra resta indietro con un aspetto **identico** a
+questo bug ma per un motivo diverso. In un test il ritardo era di 845px e si
+azzerava facendo girare il tween a mano, senza toccare il bersaglio.
+**File** `script.js`
+
+## 2026-08-06 — Il Game of Life si ripopolava dopo "pulisci griglia"
+
+**Sintomo** Dopo aver pulito la griglia ricomparivano celle vive; lo stesso dopo
+aver scelto un pattern, e allargando la finestra la fascia nuova si riempiva.
+**Causa** Tre meccanismi tengono viva la simulazione e nessuno sapeva della
+pulizia: glider iniettati dai bordi ogni 3 step (`loop()`), iniezione su
+stagnazione (`step()`), seed della porzione nuova dopo un resize
+(`seedNewArea()`).
+**Fix** Un flag `spawnAutomatico` li spegne tutti e tre insieme. `clear()` e
+`loadPattern()` lo abbassano, `reseed()` lo rialza — è l'unico comando che
+dichiara di volere vita nuova. Va in AND con le condizioni esistenti, quindi non
+scavalca `tweaks.stagnationInjection` né l'esclusione della focus mode.
+**Verifica** Contando i pixel disegnati sul canvas: dopo `clear` 0 celle anche
+dopo 40 step e dopo un ingrandimento; un pattern resta identico a se stesso
+(oscillazione a parte); `reseed` ripopola.
+**File** `gol.js`
+
+## 2026-08-06 — Tema chiaro più smorto del tema scuro
+
+**Sintomo** In modalità giorno i testi attenuati erano poco leggibili.
+**Causa** I valori del tema chiaro erano il riflesso di quelli scuri, ma il nero
+su fondo caldo rende meno del bianco su fondo scuro: con le stesse alpha il
+giorno perdeva su ogni elemento in primo piano. Testo attenuato a 1,68 di
+contrasto contro 2,26, barre a 1,41 contro 2,03. Al contrario le celle del Game
+of Life erano più marcate che di notte (1,42 contro 1,21) e rubavano attenzione
+al testo.
+**Fix** `--text-dim` da 0,22 a 0,34 (contrasto 2,35), `--line-bar` da 0,15 a 0,30
+(2,07), `--gol-cell` schiarito da `rgb(205,200,192)` a `rgb(222,217,209)` (1,20).
+**File** `style.css`
+
+## 2026-08-06 — Info card del pattern tagliata a finestra stretta
+
+**Sintomo** Restringendo la pagina in focus mode la descrizione del pattern
+finiva fuori schermo.
+**Causa** L'info card è ancorata a destra della plancia (`left: calc(100% +
+1rem)`), quindi il gruppo è più largo della sola plancia di 296px. Centrando la
+plancia, l'info sporge di 148px.
+**Fix** Sotto i 950px la plancia si sposta di quei 148px, così il gruppo risulta
+centrato e le due card restano separate. La soglia è calcolata, non a occhio: il
+taglio comincia dove `0,5vw + 0,18vw + 296 > vw`, cioè sotto i 925px.
+**File** `style.css`
+
 ## 2026-08-06 — Interlinea disuguale fra i numeri di riga ai confini di blocco
 
 **Sintomo** Fra due numeri consecutivi comparivano salti: 23,4px al confine del
